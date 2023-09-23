@@ -20,6 +20,11 @@ class WeatherApp(Tk):
         self.location_entry.grid(row = 0, column = 1, sticky="nsew")
         Button(self, text="Get Weather", command=self.get_weather).grid(row = 0, column = 2, sticky="nsew")
 
+        self.weather_icon = Label(self)
+        self.update_label(self.weather_icon, "")
+        self.forecast_icon = Label(self)
+        self.error_label = Label(self)
+
         self.weather_labels = []
         self.create_weather_labels(row_start = 2, column_start = 0, columnspan = 3)
 
@@ -45,6 +50,7 @@ class WeatherApp(Tk):
 
         for text, row in labels:
             label = Label(self, text = text)
+            print(label.__str__)
             label.grid(row = row, column = column_start, columnspan = columnspan, sticky="nsew")
             self.weather_labels.append(label)
 
@@ -94,10 +100,10 @@ class WeatherApp(Tk):
 
     def get_weather(self):
         try:
-            self.error_label.config(text = "")
+            #self.error_label.config(text = "")
 
             location = self.location_entry.get()
-            weather_data = WeatherData(API_KEY, location)
+            weather_data = WeatherData(API_KEY, N_DAYS_FORECAST, location)
             weather_data.fetch_data()
 
             current_weather = weather_data.get_current_weather()
@@ -105,7 +111,8 @@ class WeatherApp(Tk):
 
             self.update_labels(current_weather, forecast_weather)
         except Exception as e:
-            self.error_label.config(text = f"Unable to retrieve weather data.\n Error {e}.")
+            print({e})
+            #self.error_label.config(text = f"Unable to retrieve weather data.\n Error {e}.")
 
         #     if weather:
         #         current_weather = weather["current"]
@@ -139,41 +146,41 @@ class WeatherApp(Tk):
         #     self.error_label.config(text=f"Unable to retrieve weather data. {e}")
 
     def update_labels(self, current_weather, forecast_weather):
-        label_text = [
-            "Today's Weather",
-            f"http:{current_weather['condition']['icon']}",
-            f"Current Temperature: {current_weather['temp_f']}°F | {current_weather['temp_c']}°C",
-            f"Current Wind: {current_weather['wind_mph']}mph | {current_weather['wind_kph']}kph {current_weather['wind_dir']}",
-            f"Current Humidity: {current_weather['humidity']}%",
-            "",
-            f"http:{forecast_weather['condition']['icon']}",
-            f"Forecast Condition: {forecast_weather['condition']['text']}",
-            f"Max Temperature: {forecast_weather['maxtemp_f']}°F | {forecast_weather['maxtemp_c']}°C",
-            f"Min Temperature: {forecast_weather['mintemp_f']}°F| {forecast_weather['maxtemp_c']}°C",
-            f"Max Wind: {forecast_weather['maxwind_mph']}mph | {forecast_weather['maxwind_kph']}kph",
-            f"Average Humidity: {forecast_weather['avghumidity']}%",
-            f"Chance of Rain: {forecast_weather['daily_chance_of_rain']}%",
-            ""
-        ]
+        # label_text = [
+        #     "Today's Weather",
+        #     f"http:{current_weather['condition']['icon']}",
+        #     f"Current Temperature: {current_weather['temp_f']}°F | {current_weather['temp_c']}°C",
+        #     f"Current Wind: {current_weather['wind_mph']}mph | {current_weather['wind_kph']}kph {current_weather['wind_dir']}",
+        #     f"Current Humidity: {current_weather['humidity']}%",
+        #     "",
+        #     f"http:{forecast_weather['condition']['icon']}",
+        #     f"Forecast Condition: {forecast_weather['condition']['text']}",
+        #     f"Max Temperature: {forecast_weather['maxtemp_f']}°F | {forecast_weather['maxtemp_c']}°C",
+        #     f"Min Temperature: {forecast_weather['mintemp_f']}°F| {forecast_weather['maxtemp_c']}°C",
+        #     f"Max Wind: {forecast_weather['maxwind_mph']}mph | {forecast_weather['maxwind_kph']}kph",
+        #     f"Average Humidity: {forecast_weather['avghumidity']}%",
+        #     f"Chance of Rain: {forecast_weather['daily_chance_of_rain']}%",
+        #     ""
+        # ]
 
-        for i in range(len(self.weather_labels)):
-            if 'http:' in label_text[i]:
-                update_icon_label(label, text)
-            else:
-                update_label(label, text)
+        # for i in range(len(self.weather_labels)):
+        #     if 'http:' in label_text[i]:
+        #         self.update_icon_label(self.weather_labels[i], label_text[i])
+        #     else:
+        #         self.update_label(self.weather_labels[i], label_text[i])
                 
-        # self.update_label(self.weather_labels[0], "Today's Weather")
-        # self.update_icon_label(self.weather_labels[1], f"http:{current_weather['condition']['icon']}", "current_weather_icon.png")
-        # self.update_label(self.weather_labels[2], f"Current Condition: {current_weather['condition']['text']}")
-        # self.update_label(self.weather_labels[3], f"Current Wind: {current_weather['wind_mph']}mph | {current_weather['wind_kph']}kph {current_weather['wind_dir']}")
-        # self.update_label(self.weather_labels[4], f"Current Humidity: {current_weather['humidity']}%")
+        self.update_label(self.weather_labels[0], "Today's Weather")
+        self.update_icon_label(self.weather_labels[1], f"http:{current_weather['condition']['icon']}")
+        self.update_label(self.weather_labels[2], f"Current Condition: {current_weather['condition']['text']}")
+        self.update_label(self.weather_labels[3], f"Current Wind: {current_weather['wind_mph']}mph | {current_weather['wind_kph']}kph {current_weather['wind_dir']}")
+        self.update_label(self.weather_labels[4], f"Current Humidity: {current_weather['humidity']}%")
 
-        # self.update_icon_label(self.weather_labels[5], f"http:{forecast_weather['condition']['icon']}", "forecast_weather_icon.png")
-        # self.update_label(self.weather_labels[6], f"Max Temperature: {forecast_weather['maxtemp_f']}°F | {forecast_weather['maxtemp_c']}°C")
-        # self.update_label(self.weather_labels[7], f"Min Temperature: {forecast_weather['mintemp_f']}°F | {forecast_weather['maxtemp_c']}°C")
-        # self.update_label(self.weather_labels[8], f"Max Wind: {forecast_weather['maxwind_mph']}mph | {forecast_weather['maxwind_kph']}kph")
-        # self.update_label(self.weather_labels[9], f"Average Humidity: {forecast_weather['avghumidity']}%")
-        # self.update_label(self.weather_labels[10], f"Chance of Rain: {forecast_weather['daily_chance_of_rain']}%")
+        self.update_icon_label(self.weather_labels[5], f"http:{forecast_weather['condition']['icon']}")
+        self.update_label(self.weather_labels[6], f"Max Temperature: {forecast_weather['maxtemp_f']}°F | {forecast_weather['maxtemp_c']}°C")
+        self.update_label(self.weather_labels[7], f"Min Temperature: {forecast_weather['mintemp_f']}°F | {forecast_weather['maxtemp_c']}°C")
+        self.update_label(self.weather_labels[8], f"Max Wind: {forecast_weather['maxwind_mph']}mph | {forecast_weather['maxwind_kph']}kph")
+        self.update_label(self.weather_labels[9], f"Average Humidity: {forecast_weather['avghumidity']}%")
+        self.update_label(self.weather_labels[10], f"Chance of Rain: {forecast_weather['daily_chance_of_rain']}%")
 
     def update_label(self, label, text):
         label.config(text=text)
@@ -181,24 +188,8 @@ class WeatherApp(Tk):
     def update_icon_label(self, label, icon_url): # *Please check if this function is working as intended
         self.download_icon(icon_url, "icon.png")
         icon = ImageTk.PhotoImage(file = "icon.png")
-        self.label.config(image = icon)
-        self.label.image = icon
-
-    def retrieve_weather_data(self, location):
-        try:
-            if not location:
-                raise ValueError("Location cannot be empty!")
-
-            url = f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={location}&days={N_DAYS_FORECAST}&aqi=no&alerts=no"
-            response = requests.get(url)
-            if response.status_code == 200:
-                return json.loads(response.content)
-            else:
-                raise ValueError(f"API request failed with status code {response.status_code}")
-        except ValueError as e:
-            raise e
-        except Exception as e:
-            raise e
+        label.config(image = icon)
+        label.image = icon
 
     def download_icon(self, url, filename):
         try:
@@ -209,6 +200,38 @@ class WeatherApp(Tk):
                         f.write(chunk)
         except Exception as e:
             self.error_label.config(f"Error ocurred downloading icon: {e}")
+
+class WeatherData:
+    def __init__(self, API_KEY, N_DAYS_FORECAST, location):
+        self.API_KEY = API_KEY
+        self.N_DAYS_FORECAST = N_DAYS_FORECAST
+        self.location = location
+        self.current_weather = []
+        self.forecast_weather = []
+
+    def fetch_data(self):
+        try:
+            if not self.location:
+                raise ValueError("Location cannot be empty!")
+
+            url = f"http://api.weatherapi.com/v1/forecast.json?key={self.API_KEY}&q={self.location}&days={self.N_DAYS_FORECAST}&aqi=no&alerts=no"
+            response = requests.get(url)
+            if response.status_code == 200:
+                weather_data = json.loads(response.content)
+                self.current_weather = weather_data["current"]
+                self.forecast_weather = weather_data["forecast"]["forecastday"][1]["day"]
+            else:
+                raise ValueError(f"API request failed with status code {response.status_code}")
+        except ValueError as e:
+            raise e
+        except Exception as e:
+            raise e
+    
+    def get_current_weather(self):
+        return self.current_weather
+
+    def get_forecast_weather(self):
+        return self.forecast_weather
 
 if __name__ == "__main__":
     app = WeatherApp()
