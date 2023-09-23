@@ -12,29 +12,24 @@ class App(Tk):
         super().__init__()
 
 def retrieve_weather_data(location):
-    data = requests.get(f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={location}&days={N_DAYS_FORECAST}&aqi=no&alerts=no")
-    if data.status_code == 200:
-        return json.loads(data.content)
-    else:
-        print("Was not able to download weather data.")
-
-def download_icon(url):
     try:
-        r = requests.get(url, stream = True)
-        if r.status_code == 200:
-            with open("icon.png", "wb") as f:
-                for chunk in r:
-                    f.write(chunk)
+        data = requests.get(f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={location}&days={N_DAYS_FORECAST}&aqi=no&alerts=no")
+        if data.status_code == 200:
+            return json.loads(data.content)
+        else:
+            print("Was not able to download weather data.")
     except Exception as e:
-        print(f"Error ocurred downloading icon: {e}")
+        print(f"Error downloading weather data: {e}")
 
-def download_forecast_icon(url):
+def download_icon(url, filename):
     try:
-        r = requests.get(url, stream = True)
-        if r.status_code == 200:
-            with open("fore_icon.png", "wb") as f:
-                for chunk in r:
+        icon = requests.get(url, stream = True)
+        if icon.status_code == 200:
+            with open(filename, "wb") as f:
+                for chunk in icon:
                     f.write(chunk)
+        else:
+            print(f"Error downloading weather icon {filename} from {url}")
     except Exception as e:
         print(f"Error ocurred downloading icon: {e}")
 
@@ -42,8 +37,9 @@ def get_forecast_change(index, value, op):
     get_weather_clicked()
 
 def get_weather_clicked():
-    if loc_txt.get() != "":
-        weather = retrieve_weather_data(loc_txt.get())
+    location_text = loc_txt.get()
+    if location_text != "":
+        weather = retrieve_weather_data(location_text)
 
         current_weather = weather["current"]
 
@@ -53,7 +49,7 @@ def get_weather_clicked():
         wind_lbl.configure(text = f"Current Wind: {current_weather['wind_mph']}mph {current_weather['wind_dir']}")
         humid_lbl.configure(text = f"Current Humidity: {current_weather['humidity']}%")
 
-        download_icon(f"http:{current_weather['condition']['icon']}")
+        download_icon(f"http:{current_weather['condition']['icon']}", "icon.png")
         img = ImageTk.PhotoImage(file = "icon.png")
         img_panel = Label(app, image = img)
         img_panel.image = img
@@ -68,7 +64,7 @@ def get_weather_clicked():
         avg_humid_lbl.configure(text = f"Avg Humidity: {forecast_weather['avghumidity']}%")
         chance_rain_lbl.configure(text = f"Chance of Rain: {forecast_weather['daily_chance_of_rain']}%")
 
-        download_forecast_icon(f"http:{forecast_weather['condition']['icon']}")
+        download_icon(f"http:{forecast_weather['condition']['icon']}", "fore_icon.png")
         fore_img = ImageTk.PhotoImage(file = "fore_icon.png")
         fore_img_panel = Label(app, image = fore_img)
         fore_img_panel.image = fore_img
@@ -104,11 +100,11 @@ if __name__ == "__main__":
     #separator_lbl.grid(column = 1, row = 7)
     n = StringVar()
     n.trace('w',get_forecast_change)
-    forecast_day_chooser = ttk.Combobox(app, width = 15, textvariable = n)
+    forecast_day_chooser = ttk.Combobox(app, width = 18, textvariable = n)
     dt = datetime.now()
     day_chooser_values = [" Today's Forecast", " Tomorrow's Forecast"]
     dt += timedelta(days = 1)
-    for i in range(2,10):
+    for i in range(2,N_DAYS_FORECAST):
         dt += timedelta(days = 1)
         if i >= 7:
             day_chooser_values.append(f" Next {dt.strftime('%A')}'s Forecast")
