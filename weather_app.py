@@ -39,7 +39,7 @@ def create_forecast_options():
         dt = datetime.now()
         day_chooser_values = [" Today's Forecast", " Tomorrow's Forecast"]
         dt += timedelta(days = 1)
-        for i in range(2,N_DAYS_FORECAST):
+        for i in range( 2, N_DAYS_FORECAST ):
             dt += timedelta(days = 1)
             if i >= 7:
                 day_chooser_values.append(f" Next {dt.strftime('%A')}'s Forecast")
@@ -122,8 +122,6 @@ if __name__ == "__main__":
     n = StringVar()
     n.trace('w',get_forecast_change)
     forecast_day_chooser = ttk.Combobox(app, width = 18, textvariable = n)
-
-
     forecast_day_chooser["values"] = create_forecast_options()
     forecast_day_chooser.grid(column = 1, row = 7)
     forecast_day_chooser.current(0)
