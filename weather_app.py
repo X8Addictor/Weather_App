@@ -1,4 +1,5 @@
-import json, requests
+import json
+import requests
 from datetime import datetime, timedelta
 from tkinter import *
 from tkinter import ttk
@@ -8,88 +9,68 @@ from PIL import Image, ImageTk
 API_KEY = "04cefdc70dc64f37bf001213232309"
 N_DAYS_FORECAST = 10    #Should be at least 2
 
-class App(Tk):
+class WeatherApp(Tk):
     def __init__(self):
         super().__init__()
 
 def retrieve_weather_data(location):
-    try:
-        data = requests.get(f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={location}&days={N_DAYS_FORECAST}&aqi=no&alerts=no")
-        if data.status_code == 200:
-            return json.loads(data.content)
-        else:
-            messagebox.showerror("Error", f"Was not able to download weather data. Status code {data.status_code}")
-    except Exception as e:
-        messagebox.showerror("Error", f"Error downloading weather data: {e}")
+    data = requests.get(f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={location}&days={N_DAYS_FORECAST}&aqi=no&alerts=no")
+    if data.status_code == 200:
+        return json.loads(data.content)
+    else:
+        print("Was not able to download weather data.")
 
-def download_icon(url, filename):
+def download_icon(url):
     try:
-        icon = requests.get(url, stream = True)
-        if icon.status_code == 200:
-            with open(filename, "wb") as f:
-                for chunk in icon:
+        r = requests.get(url, stream = True)
+        if r.status_code == 200:
+            with open("icon.png", "wb") as f:
+                for chunk in r:
                     f.write(chunk)
-        else:
-            messagebox.showerror("Error", f"Error downloading weather icon {filename} from {url} Status code {icon.status_code}")
     except Exception as e:
-        messagebox.showerror("Error", f"Error ocurred downloading icon: {e}")
+        print(f"Error ocurred downloading icon: {e}")
 
-def create_forecast_options():
+def download_forecast_icon(url):
     try:
-        dt = datetime.now()
-        day_chooser_values = [" Today's Forecast", " Tomorrow's Forecast"]
-        dt += timedelta(days = 1)
-        for i in range(2,N_DAYS_FORECAST):
-            dt += timedelta(days = 1)
-            if i >= 7:
-                day_chooser_values.append(f" Next {dt.strftime('%A')}'s Forecast")
-            else:
-                day_chooser_values.append(f" {dt.strftime('%A')}'s Forecast")
-        return tuple(day_chooser_values)
+        r = requests.get(url, stream = True)
+        if r.status_code == 200:
+            with open("fore_icon.png", "wb") as f:
+                for chunk in r:
+                    f.write(chunk)
     except Exception as e:
-        messagebox.showerror("Error", f"Error creating forecast options: {e}")
-
-def get_forecast_change(index, value, op):
-    get_weather_clicked()
+        print(f"Error ocurred downloading icon: {e}")
 
 def get_weather_clicked():
-    try:
-        location_text = loc_txt.get()
-        if location_text != "":
-            weather = retrieve_weather_data(location_text)
+    weather = retrieve_weather_data(loc_txt.get())
 
-            current_weather = weather["current"]
+    current_weather = weather["current"]
 
-            today_lbl.configure(text = f"Today's Weather as of {current_weather['last_updated']}")
-            temp_lbl.configure(text = f"Current Temperature: {current_weather['temp_f']} deg F")
-            cond_lbl.configure(text = f"Current Condition: {current_weather['condition']['text']}")
-            wind_lbl.configure(text = f"Current Wind: {current_weather['wind_mph']}mph {current_weather['wind_dir']}")
-            humid_lbl.configure(text = f"Current Humidity: {current_weather['humidity']}%")
+    today_lbl.configure(text = f"Today's Weather")
+    temp_lbl.configure(text = f"Current Temperature: {current_weather['temp_f']} deg F")
+    cond_lbl.configure(text = f"Current Condition: {current_weather['condition']['text']}")
+    wind_lbl.configure(text = f"Current Wind: {current_weather['wind_mph']}mph {current_weather['wind_dir']}")
+    humid_lbl.configure(text = f"Current Humidity: {current_weather['humidity']}%")
 
-            download_icon(f"http:{current_weather['condition']['icon']}", "icon.png")
-            img = ImageTk.PhotoImage(file = "icon.png")
-            img_panel = Label(app, image = img)
-            img_panel.image = img
-            img_panel.grid(column = 1, row = 2)
+    download_icon(f"http:{current_weather['condition']['icon']}")
+    img = ImageTk.PhotoImage(file = "icon.png")
+    img_panel = Label(app, image = img)
+    img_panel.image = img
+    img_panel.grid(column = 0, row = 2)
 
-            forecast_weather = weather["forecast"]["forecastday"][forecast_day_chooser.current()]["day"]
+    forecast_weather = weather["forecast"]["forecastday"][0]["day"]
 
-            fore_cond_lbl.configure(text = f"Forecast Condition: {forecast_weather['condition']['text']}")
-            max_temp_lbl.configure(text = f"Max Temperature: {forecast_weather['maxtemp_f']} deg F")
-            min_temp_lbl.configure(text = f"Min Temperature: {forecast_weather['mintemp_f']} deg F")
-            fore_wind_lbl.configure(text = f"Max Wind: {forecast_weather['maxwind_mph']}mph")
-            avg_humid_lbl.configure(text = f"Avg Humidity: {forecast_weather['avghumidity']}%")
-            chance_rain_lbl.configure(text = f"Chance of Rain: {forecast_weather['daily_chance_of_rain']}%")
+    fore_cond_lbl.configure(text = f"Forecast Condition: {forecast_weather['condition']['text']}")
+    max_temp_lbl.configure(text = f"Max Temperature: {forecast_weather['maxtemp_f']} deg F")
+    min_temp_lbl.configure(text = f"Min Temperature: {forecast_weather['mintemp_f']} deg F")
+    fore_wind_lbl.configure(text = f"Max Wind: {forecast_weather['maxwind_mph']}mph")
+    avg_humid_lbl.configure(text = f"Avg Humidity: {forecast_weather['avghumidity']}%")
+    chance_rain_lbl.configure(text = f"Chance of Rain: {forecast_weather['daily_chance_of_rain']}%")
 
-            download_icon(f"http:{forecast_weather['condition']['icon']}", "fore_icon.png")
-            fore_img = ImageTk.PhotoImage(file = "fore_icon.png")
-            fore_img_panel = Label(app, image = fore_img)
-            fore_img_panel.image = fore_img
-            fore_img_panel.grid(column = 1, row = 8)
-        #else:
-            #messagebox.showwarning("Warning", f"Please enter a valid City, State or City, Country")
-    except Exception as e:
-        messagebox.showerror("Error", f"Error in processing weather data: {e} Make sure you enter a valid City, State or City, Country")
+    download_forecast_icon(f"http:{forecast_weather['condition']['icon']}")
+    fore_img = ImageTk.PhotoImage(file = "fore_icon.png")
+    fore_img_panel = Label(app, image = fore_img)
+    fore_img_panel.image = fore_img
+    fore_img_panel.grid(column = 0, row = 8)
 
 if __name__ == "__main__":
     app = App()
@@ -106,39 +87,31 @@ if __name__ == "__main__":
     btn.grid(column = 2, row = 0)
 
     today_lbl = Label(app, text = "")
-    today_lbl.grid(column = 1, row = 1)
+    today_lbl.grid(column = 0, row = 1)
 
     cond_lbl = Label(app, text = "")
-    cond_lbl.grid(column = 1, row = 3)
+    cond_lbl.grid(column = 0, row = 3)
     temp_lbl = Label(app, text = "")
-    temp_lbl.grid(column = 1, row = 4)
+    temp_lbl.grid(column = 0, row = 4)
     wind_lbl = Label(app, text = "")
-    wind_lbl.grid(column = 1, row = 5)
+    wind_lbl.grid(column = 0, row = 5)
     humid_lbl = Label(app, text = "")
-    humid_lbl.grid(column = 1, row = 6)
+    humid_lbl.grid(column = 0, row = 6)
 
-    #separator_lbl = Label(app, text = " ")
-    #separator_lbl.grid(column = 1, row = 7)
-    n = StringVar()
-    n.trace('w',get_forecast_change)
-    forecast_day_chooser = ttk.Combobox(app, width = 18, textvariable = n)
-
-
-    forecast_day_chooser["values"] = create_forecast_options()
-    forecast_day_chooser.grid(column = 1, row = 7)
-    forecast_day_chooser.current(0)
+    separator_lbl = Label(app, text = " ")
+    separator_lbl.grid(column = 0, row = 7)
 
     fore_cond_lbl = Label(app, text = "")
-    fore_cond_lbl.grid(column = 1, row = 9)
+    fore_cond_lbl.grid(column = 0, row = 9)
     max_temp_lbl = Label(app, text = "")
-    max_temp_lbl.grid(column = 1, row = 10)
+    max_temp_lbl.grid(column = 0, row = 10)
     min_temp_lbl = Label(app, text = "")
-    min_temp_lbl.grid(column = 1, row = 11)
+    min_temp_lbl.grid(column = 0, row = 11)
     fore_wind_lbl = Label(app, text = "")
-    fore_wind_lbl.grid(column = 1, row = 12)
+    fore_wind_lbl.grid(column = 0, row = 12)
     avg_humid_lbl = Label(app, text = "")
-    avg_humid_lbl.grid(column = 1, row = 13)
+    avg_humid_lbl.grid(column = 0, row = 13)
     chance_rain_lbl = Label(app, text = "")
-    chance_rain_lbl.grid(column = 1, row = 14)
+    chance_rain_lbl.grid(column = 0, row = 14)
 
     app.mainloop()
