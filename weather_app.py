@@ -20,18 +20,24 @@ def retrieve_weather_data(location):
         print("Was not able to download weather data.")
 
 def download_icon(url):
-    r = requests.get(url, stream = True)
-    if r.status_code == 200:
-        with open("icon.png", "wb") as f:
-            for chunk in r:
-                f.write(chunk)
+    try:
+        r = requests.get(url, stream = True)
+        if r.status_code == 200:
+            with open("icon.png", "wb") as f:
+                for chunk in r:
+                    f.write(chunk)
+    except Exception as e:
+        print(f"Error ocurred downloading icon: {e}")
 
 def download_forecast_icon(url):
-    r = requests.get(url, stream = True)
-    if r.status_code == 200:
-        with open("fore_icon.png", "wb") as f:
-            for chunk in r:
-                f.write(chunk)
+    try:
+        r = requests.get(url, stream = True)
+        if r.status_code == 200:
+            with open("fore_icon.png", "wb") as f:
+                for chunk in r:
+                    f.write(chunk)
+    except Exception as e:
+        print(f"Error ocurred downloading icon: {e}")
 
 def get_weather_clicked():
     weather = retrieve_weather_data(loc_txt.get())
