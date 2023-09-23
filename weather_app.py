@@ -34,6 +34,9 @@ def download_icon(url, filename):
     except Exception as e:
         messagebox.showerror("Error", f"Error ocurred downloading icon: {e}")
 
+
+
+#### Forecast day options method ####
 def create_forecast_options():
     try:
         dt = datetime.now()
@@ -49,8 +52,16 @@ def create_forecast_options():
     except Exception as e:
         messagebox.showerror("Error", f"Error creating forecast options: {e}")
 
+
+
+
+
+
 def get_forecast_change(index, value, op):
     get_weather_clicked()
+
+
+
 
 def get_weather_clicked():
     try:
@@ -119,12 +130,19 @@ if __name__ == "__main__":
 
     #separator_lbl = Label(app, text = " ")
     #separator_lbl.grid(column = 1, row = 7)
+
+
+
+    ####Forecast Day Chooser####
     n = StringVar()
     n.trace('w',get_forecast_change)
     forecast_day_chooser = ttk.Combobox(app, width = 18, textvariable = n)
     forecast_day_chooser["values"] = create_forecast_options()
     forecast_day_chooser.grid(column = 1, row = 7)
     forecast_day_chooser.current(0)
+
+
+
 
     fore_cond_lbl = Label(app, text = "")
     fore_cond_lbl.grid(column = 1, row = 9)
