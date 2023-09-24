@@ -1,160 +1,275 @@
-import json, requests
+import json
+import requests
 from datetime import datetime, timedelta
 from tkinter import *
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 
 API_KEY = "04cefdc70dc64f37bf001213232309"
-N_DAYS_FORECAST = 10    #Should be at least 2
+N_DAYS_FORECAST = 10
 
-class App(Tk):
+class WeatherApp(Tk):
     def __init__(self):
         super().__init__()
+        self.title("Weather App")
+        self.geometry("640x480")
+        self.create_widgets()
 
-def retrieve_weather_data(location):
-    try:
-        data = requests.get(f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={location}&days={N_DAYS_FORECAST}&aqi=no&alerts=no")
-        if data.status_code == 200:
-            return json.loads(data.content)
-        else:
-            messagebox.showerror("Error", f"Was not able to download weather data. Status code {data.status_code}")
-    except Exception as e:
-        messagebox.showerror("Error", f"Error downloading weather data: {e}")
+    def create_widgets(self):
+        Label(self, text="Enter City, State or Country: ").grid(row = 0, column = 0, sticky="nsew")
+        self.location_entry = Entry(self, width = 20)
+        self.location_entry.grid(row = 0, column = 1, sticky="nsew")
+        Button(self, text="Get Weather", command=self.get_weather).grid(row = 0, column = 2, sticky="nsew")
 
-def download_icon(url, filename):
-    try:
-        icon = requests.get(url, stream = True)
-        if icon.status_code == 200:
-            with open(filename, "wb") as f:
-                for chunk in icon:
-                    f.write(chunk)
-        else:
-            messagebox.showerror("Error", f"Error downloading weather icon {filename} from {url} Status code {icon.status_code}")
-    except Exception as e:
-        messagebox.showerror("Error", f"Error ocurred downloading icon: {e}")
+        ##### This is the popup menu for forecast day selection ######
+        self.n = StringVar()
+        self.n.trace('w', self.get_forecast_change) #This is for detecting a change in popup menu
+        self.forecast_day_chooser = ttk.Combobox(self, width = 18, textvariable = self.n)
+        self.forecast_day_chooser["values"] = self.create_forecast_options()
+        self.forecast_day_chooser.grid(column = 0, row = 1, sticky="nsew")
+        self.forecast_day_chooser.current(0)
+        ##############################################################
 
+        self.weather_icon = Label(self)
+        self.update_label(self.weather_icon, "")
+        self.forecast_icon = Label(self)
+        #self.error_label = Label(self)
 
+        self.weather_labels = []
+        self.create_weather_labels(row_start = 2, column_start = 0, columnspan = 3)
 
-#### Forecast day options method ####
-def create_forecast_options():
-    try:
-        dt = datetime.now()
-        day_chooser_values = [" Today's Forecast", " Tomorrow's Forecast"]
-        dt += timedelta(days = 1)
-        for i in range( 2, N_DAYS_FORECAST ):
+##### This reloads the weather entirely, because the forecast day was changed in the popup menu #####
+    def get_forecast_change(self, index, value, op):
+        if self.location_entry.get(): #setting the current value triggers the change, so we check to make sure there's a location
+            self.get_weather()
+
+##### This creates day names for future forecast days, starting with today and tomorrow
+    def create_forecast_options(self):
+        try:
+            dt = datetime.now()
+            day_chooser_values = [" Today's Forecast", " Tomorrow's Forecast"]
             dt += timedelta(days = 1)
-            if i >= 7:
-                day_chooser_values.append(f" Next {dt.strftime('%A')}'s Forecast")
+            for i in range( 2, N_DAYS_FORECAST ):
+                dt += timedelta(days = 1)
+                if i >= 7:  #if it's a week away or more
+                    day_chooser_values.append(f" Next {dt.strftime('%A')}'s Forecast") # say "next day"
+                else:
+                    day_chooser_values.append(f" {dt.strftime('%A')}'s Forecast") # otherwise just day
+            return tuple(day_chooser_values)
+        except Exception as e:
+            messagebox.showerror("Error", f"Error creating forecast options: {e}")
+
+    def create_weather_labels(self, row_start, column_start, columnspan):
+        labels = [
+            ("", row_start), # Today's label
+            (self.weather_icon, row_start + 1), # Today's weather icon
+            ("", row_start + 2), # Today's condition
+            ("", row_start + 3), # Today's temperature
+            ("", row_start + 4), # Today's wind speed
+            ("", row_start + 5), # Today's humidity
+            ("", row_start + 6), # Spacer label to create a gap between today's cast and forecast
+            (self.forecast_icon, row_start + 7),  # Forecast icon
+            ("", row_start + 8), # Forecast condition
+            ("", row_start + 9), # Forecast max temperature
+            ("", row_start + 10), # Forecast min temperature
+            ("", row_start + 11), # Forecast wind speed
+            ("", row_start + 12), # Forecast humidity
+            ("", row_start + 13), # Forecast rain chance
+            ("", row_start + 14), # Spacer label to create a gap between forecast and error label
+            #(self.error_label, row_start + 15), # Forecast error lable
+        ]
+
+        for text, row in labels:
+            label = Label(self, text = text)
+            print(label.__str__)
+            label.grid(row = row, column = column_start, columnspan = columnspan, sticky="nsew")
+            self.weather_labels.append(label)
+
+        # self.today_label = Label(self, text = "")
+        # self.today_label.grid(row = 2, column = 0, columnspan=3, sticky="nsew")
+
+        # self.weather_icon = Label(self)
+        # self.weather_icon.grid(row = 3, column = 0, columnspan=3, sticky="nsew")
+
+        # self.condition_label = Label(self, text = "")
+        # self.condition_label.grid(row = 4, column = 0, columnspan=3, sticky="nsew")
+
+        # self.temperature_label = Label(self, text = "")
+        # self.temperature_label.grid(row = 5, column = 0, columnspan=3, sticky="nsew")
+
+        # self.wind_label = Label(self, text = "")
+        # self.wind_label.grid(row = 6, column = 0, columnspan=3, sticky="nsew")
+
+        # self.humidity_label = Label(self, text = "")
+        # self.humidity_label.grid(row = 7, column = 0, columnspan=3, sticky="nsew")
+
+        # Label(self, text=" ").grid(row = 8, column = 0, columnspan=3, sticky="nsew")
+
+        # self.forecast_icon = Label(self)
+        # self.forecast_icon.grid(row = 9, column = 0, columnspan=3, sticky="nsew")
+
+        # self.forecast_condition_label = Label(self, text = "")
+        # self.forecast_condition_label.grid(row = 10, column = 0, columnspan=3, sticky="nsew")
+
+        # self.max_temperature_label = Label(self, text = "")
+        # self.max_temperature_label.grid(row = 11, column = 0, columnspan=3, sticky="nsew")
+
+        # self.min_temperature_label = Label(self, text = "")
+        # self.min_temperature_label.grid(row = 12, column = 0, columnspan=3, sticky="nsew")
+
+        # self.forecast_wind_label = Label(self, text = "")
+        # self.forecast_wind_label.grid(row = 13, column = 0, columnspan=3, sticky="nsew")
+
+        # self.avg_humidity_label = Label(self, text="")
+        # self.avg_humidity_label.grid(row=14, column=0, columnspan=3, sticky="nsew")
+
+        # self.chance_rain_label = Label(self, text = "")
+        # self.chance_rain_label.grid(row = 15, column = 0, columnspan=3, sticky="nsew")
+
+        # self.error_label = Label(self, text = "")
+        # self.error_label.grid(row = 16, column = 0, columnspan=3, sticky="nsew")
+
+    def get_weather(self):
+        try:
+            #self.error_label.config(text = "")
+
+            location = self.location_entry.get()
+            weather_data = WeatherData(API_KEY, N_DAYS_FORECAST, location)
+            weather_data.fetch_data(self.forecast_day_chooser.current())
+
+            current_weather = weather_data.get_current_weather()
+            forecast_weather = weather_data.get_forecast_weather()
+
+            self.update_labels(current_weather, forecast_weather)
+        except Exception as e:
+            messagebox.showerror("Error", f"Error geting weather: {e}")
+            #self.error_label.config(text = f"Unable to retrieve weather data.\n Error {e}.")
+
+        #     if weather:
+        #         current_weather = weather["current"]
+
+        #         self.today_label.config(text = "Today's Weather")
+        #         self.condition_label.config(text = f"Current Condition: {current_weather['condition']['text']}")
+        #         self.temperature_label.config(text = f"Current Temperature: {current_weather['temp_f']}°F | {current_weather['temp_c']}°C")
+
+        #         self.wind_label.config(text = f"Current Wind: {current_weather['wind_mph']}mph | {current_weather['wind_kph']}kph {current_weather['wind_dir']}")
+        #         self.humidity_label.config(text = f"Current Humidity: {current_weather['humidity']}%")
+
+        #         self.download_icon(f"http:{current_weather['condition']['icon']}", "current_icon.png")
+        #         current_icon = ImageTk.PhotoImage(file = "current_icon.png")
+        #         self.weather_icon.config(image = current_icon)
+        #         self.weather_icon.image = current_icon
+
+        #         forecast_weather = weather["forecast"]["forecastday"][1]["day"]
+
+        #         self.forecast_condition_label.config(text = f"Forecast Condition: {forecast_weather['condition']['text']}")
+        #         self.max_temperature_label.config(text = f"Max Temperature: {forecast_weather['maxtemp_f']}°F | {forecast_weather['maxtemp_c']}°C")
+        #         self.min_temperature_label.config(text = f"Min Temperature: {forecast_weather['mintemp_f']}°F| {forecast_weather['maxtemp_c']}°C")
+        #         self.forecast_wind_label.config(text = f"Max Wind: {forecast_weather['maxwind_mph']}mph | {forecast_weather['maxwind_kph']}kph")
+        #         self.avg_humidity_label.config(text = f"Average Humidity: {forecast_weather['avghumidity']}%")
+        #         self.chance_rain_label.config(text = f"Chance of Rain: {forecast_weather['daily_chance_of_rain']}%")
+
+        #         self.download_icon(f"http:{forecast_weather['condition']['icon']}", "forecast_icon.png")
+        #         forecase_icon = ImageTk.PhotoImage(file = "forecast_icon.png")
+        #         self.forecast_icon.config(image = forecase_icon)
+        #         self.forecast_icon.image = forecase_icon
+        # except Exception as e:
+        #     self.error_label.config(text=f"Unable to retrieve weather data. {e}")
+
+    def update_labels(self, current_weather, forecast_weather):
+        # label_text = [
+        #     "Today's Weather",
+        #     f"http:{current_weather['condition']['icon']}",
+        #     f"Current Temperature: {current_weather['temp_f']}°F | {current_weather['temp_c']}°C",
+        #     f"Current Wind: {current_weather['wind_mph']}mph | {current_weather['wind_kph']}kph {current_weather['wind_dir']}",
+        #     f"Current Humidity: {current_weather['humidity']}%",
+        #     "",
+        #     f"http:{forecast_weather['condition']['icon']}",
+        #     f"Forecast Condition: {forecast_weather['condition']['text']}",
+        #     f"Max Temperature: {forecast_weather['maxtemp_f']}°F | {forecast_weather['maxtemp_c']}°C",
+        #     f"Min Temperature: {forecast_weather['mintemp_f']}°F| {forecast_weather['maxtemp_c']}°C",
+        #     f"Max Wind: {forecast_weather['maxwind_mph']}mph | {forecast_weather['maxwind_kph']}kph",
+        #     f"Average Humidity: {forecast_weather['avghumidity']}%",
+        #     f"Chance of Rain: {forecast_weather['daily_chance_of_rain']}%",
+        #     ""
+        # ]
+
+        # for i in range(len(self.weather_labels)):
+        #     if 'http:' in label_text[i]:
+        #         self.update_icon_label(self.weather_labels[i], label_text[i])
+        #     else:
+        #         self.update_label(self.weather_labels[i], label_text[i])
+
+        self.update_label(self.weather_labels[0], f"Today's Weather as of {current_weather['last_updated']}")
+        self.update_icon_label(self.weather_labels[1], f"http:{current_weather['condition']['icon']}")
+        self.update_label(self.weather_labels[2], f"Current Condition: {current_weather['condition']['text']}")
+        self.update_label(self.weather_labels[3], f"Current Temperature: {current_weather['temp_f']}°F | {current_weather['temp_c']}°C")
+        self.update_label(self.weather_labels[4], f"Current Wind: {current_weather['wind_mph']}mph | {current_weather['wind_kph']}kph {current_weather['wind_dir']}")
+        self.update_label(self.weather_labels[5], f"Current Humidity: {current_weather['humidity']}%")
+        self.update_label(self.weather_labels[6], f"")
+        self.update_icon_label(self.weather_labels[7], f"http:{forecast_weather['condition']['icon']}")
+        self.update_label(self.weather_labels[8], f"Forecasted Condition: {forecast_weather['condition']['text']}")
+        self.update_label(self.weather_labels[9], f"Max Temperature: {forecast_weather['maxtemp_f']}°F | {forecast_weather['maxtemp_c']}°C")
+        self.update_label(self.weather_labels[10], f"Min Temperature: {forecast_weather['mintemp_f']}°F | {forecast_weather['mintemp_c']}°C")
+        self.update_label(self.weather_labels[11], f"Max Wind: {forecast_weather['maxwind_mph']}mph | {forecast_weather['maxwind_kph']}kph")
+        self.update_label(self.weather_labels[12], f"Average Humidity: {forecast_weather['avghumidity']}%")
+        self.update_label(self.weather_labels[13], f"Chance of Rain: {forecast_weather['daily_chance_of_rain']}%")
+        self.update_label(self.weather_labels[14], f"Total Precipitation: {forecast_weather['totalprecip_in']}in | {forecast_weather['totalprecip_mm']}mm")
+
+    def update_label(self, label, text):
+        label.config(text=text)
+
+    def update_icon_label(self, label, icon_url): # *Please check if this function is working as intended
+        self.download_icon(icon_url, "icon.png")
+        icon = ImageTk.PhotoImage(file = "icon.png")
+        label.config(image = icon)
+        label.image = icon
+
+    def download_icon(self, url, filename):
+        try:
+            response = requests.get(url, stream = True)
+            if response.status_code == 200:
+                with open(filename, "wb") as f:
+                    for chunk in response.iter_content(1024):
+                        f.write(chunk)
             else:
-                day_chooser_values.append(f" {dt.strftime('%A')}'s Forecast")
-        return tuple(day_chooser_values)
-    except Exception as e:
-        messagebox.showerror("Error", f"Error creating forecast options: {e}")
+                raise ValueError(f"Icon download request failed with status code {response.status_code}")
+        except Exception as e:
+            #self.error_label.config(f"Error ocurred downloading icon: {e}")
+            messagebox.showerror("Error", f"Error occurred downloading icon: {e}")
 
+class WeatherData:
+    def __init__(self, API_KEY, N_DAYS_FORECAST, location):
+        self.API_KEY = API_KEY
+        self.N_DAYS_FORECAST = N_DAYS_FORECAST
+        self.location = location
+        self.current_weather = []
+        self.forecast_weather = []
 
+    def fetch_data(self, day):
+        try:
+            if not self.location:
+                raise ValueError("Location cannot be empty!")
 
+            url = f"http://api.weatherapi.com/v1/forecast.json?key={self.API_KEY}&q={self.location}&days={self.N_DAYS_FORECAST}&aqi=no&alerts=no"
+            response = requests.get(url)
+            if response.status_code == 200:
+                weather_data = json.loads(response.content)
+                self.current_weather = weather_data["current"]
+                self.forecast_weather = weather_data["forecast"]["forecastday"][day]["day"]
+            else:
+                raise ValueError(f"API request failed with status code {response.status_code}")
+        except ValueError as e:
+            messagebox.showerror("Error", f"Error fetching weather data: {e}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error fetching weather data: {e}")
 
+    def get_current_weather(self):
+        return self.current_weather
 
-
-def get_forecast_change(index, value, op):
-    get_weather_clicked()
-
-
-
-
-def get_weather_clicked():
-    try:
-        location_text = loc_txt.get()
-        if location_text != "":
-            weather = retrieve_weather_data(location_text)
-
-            current_weather = weather["current"]
-
-            today_lbl.configure(text = f"Today's Weather as of {current_weather['last_updated']}")
-            temp_lbl.configure(text = f"Current Temperature: {current_weather['temp_f']} deg F")
-            cond_lbl.configure(text = f"Current Condition: {current_weather['condition']['text']}")
-            wind_lbl.configure(text = f"Current Wind: {current_weather['wind_mph']}mph {current_weather['wind_dir']}")
-            humid_lbl.configure(text = f"Current Humidity: {current_weather['humidity']}%")
-
-            download_icon(f"http:{current_weather['condition']['icon']}", "icon.png")
-            img = ImageTk.PhotoImage(file = "icon.png")
-            img_panel = Label(app, image = img)
-            img_panel.image = img
-            img_panel.grid(column = 1, row = 2)
-
-            forecast_weather = weather["forecast"]["forecastday"][forecast_day_chooser.current()]["day"]
-
-            fore_cond_lbl.configure(text = f"Forecast Condition: {forecast_weather['condition']['text']}")
-            max_temp_lbl.configure(text = f"Max Temperature: {forecast_weather['maxtemp_f']} deg F")
-            min_temp_lbl.configure(text = f"Min Temperature: {forecast_weather['mintemp_f']} deg F")
-            fore_wind_lbl.configure(text = f"Max Wind: {forecast_weather['maxwind_mph']}mph")
-            avg_humid_lbl.configure(text = f"Avg Humidity: {forecast_weather['avghumidity']}%")
-            chance_rain_lbl.configure(text = f"Chance of Rain: {forecast_weather['daily_chance_of_rain']}%")
-
-            download_icon(f"http:{forecast_weather['condition']['icon']}", "fore_icon.png")
-            fore_img = ImageTk.PhotoImage(file = "fore_icon.png")
-            fore_img_panel = Label(app, image = fore_img)
-            fore_img_panel.image = fore_img
-            fore_img_panel.grid(column = 1, row = 8)
-        #else:
-            #messagebox.showwarning("Warning", f"Please enter a valid City, State or City, Country")
-    except Exception as e:
-        messagebox.showerror("Error", f"Error in processing weather data: {e} Make sure you enter a valid City, State or City, Country")
+    def get_forecast_weather(self):
+        return self.forecast_weather
 
 if __name__ == "__main__":
-    app = App()
-    app.title("Weather App")
-    app.geometry("640x480")
-
-    entry_lbl = Label(app, text = "Enter City, State (or Country): ")
-    entry_lbl.grid()
-
-    loc_txt = Entry(app, width = 20)
-    loc_txt.grid(column = 1, row = 0)
-
-    btn = Button(app, text = "Get Weather", command = get_weather_clicked)
-    btn.grid(column = 2, row = 0)
-
-    today_lbl = Label(app, text = "")
-    today_lbl.grid(column = 1, row = 1)
-
-    cond_lbl = Label(app, text = "")
-    cond_lbl.grid(column = 1, row = 3)
-    temp_lbl = Label(app, text = "")
-    temp_lbl.grid(column = 1, row = 4)
-    wind_lbl = Label(app, text = "")
-    wind_lbl.grid(column = 1, row = 5)
-    humid_lbl = Label(app, text = "")
-    humid_lbl.grid(column = 1, row = 6)
-
-    #separator_lbl = Label(app, text = " ")
-    #separator_lbl.grid(column = 1, row = 7)
-
-
-
-    ####Forecast Day Chooser####
-    n = StringVar()
-    n.trace('w',get_forecast_change)
-    forecast_day_chooser = ttk.Combobox(app, width = 18, textvariable = n)
-    forecast_day_chooser["values"] = create_forecast_options()
-    forecast_day_chooser.grid(column = 1, row = 7)
-    forecast_day_chooser.current(0)
-
-
-
-
-    fore_cond_lbl = Label(app, text = "")
-    fore_cond_lbl.grid(column = 1, row = 9)
-    max_temp_lbl = Label(app, text = "")
-    max_temp_lbl.grid(column = 1, row = 10)
-    min_temp_lbl = Label(app, text = "")
-    min_temp_lbl.grid(column = 1, row = 11)
-    fore_wind_lbl = Label(app, text = "")
-    fore_wind_lbl.grid(column = 1, row = 12)
-    avg_humid_lbl = Label(app, text = "")
-    avg_humid_lbl.grid(column = 1, row = 13)
-    chance_rain_lbl = Label(app, text = "")
-    chance_rain_lbl.grid(column = 1, row = 14)
-
+    app = WeatherApp()
     app.mainloop()
