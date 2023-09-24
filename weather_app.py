@@ -29,12 +29,6 @@ class WeatherApp(Tk):
         self.forecast_day_chooser.grid(column = 0, row = 1, sticky="nsew")
         self.forecast_day_chooser.current(0)
         ##############################################################
-
-        # Remove below code once tested - Karan
-        # self.weather_icon = Label(self)
-        # self.weather_icon.grid(row=4,column=0) 
-        # self.forecast_icon = Label(self)
-
         self.weather_labels = []
         self.create_weather_labels(row = 2, column = 0, columnspan = 3)
 
@@ -44,7 +38,7 @@ class WeatherApp(Tk):
             self.get_weather()
 
 ##### This creates day names for future forecast days, starting with today and tomorrow
-    def create_forecast_options(self):
+    def create_forecast_options(self): # The naming can be better instead of mentioning days, mention the date instead - Karan
         try:
             dt = datetime.now()
             day_chooser_values = [" Today's Forecast", " Tomorrow's Forecast"]
@@ -59,7 +53,7 @@ class WeatherApp(Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Error creating forecast options: {e}")
 
-    def create_weather_labels(self, row, column, columnspan): # Updated function - Karan
+    def create_weather_labels(self, row, column, columnspan):
         labels = [ # List of dictionaries of labels with its respective values
             {"current_label" : "", # current label
             "row" : row, "column" : column, "columnspan" : columnspan}, 
@@ -170,7 +164,7 @@ class WeatherApp(Tk):
     def update_label(self, label, text):
         label.config(text = text)
 
-    def update_icon_label(self, label, icon_url): # *Please check if this function is working as intended
+    def update_icon_label(self, label, icon_url):
         self.download_icon(icon_url, "temp_icon.png")
         icon = ImageTk.PhotoImage(file = "temp_icon.png")
         label.config(image = icon)
