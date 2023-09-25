@@ -9,19 +9,23 @@ API_KEY = "04cefdc70dc64f37bf001213232309"
 N_DAYS_FORECAST = 10 # Make this into a 7 day forecast - Karan
 
 class WeatherApp(Tk):
+    """A simple weather application using Tkinter for the GUI."""
+
     def __init__(self):
+        """Initialize the WeatherApp class."""
         super().__init__()
         self.title("Weather App")
         self.geometry("640x480")
         self.create_widgets()
 
     def create_widgets(self):
+        """Create GUI widgets and layout for the WeatherApp."""
         Label(self, text="Enter City, State or Country: ").grid(row = 0, column = 0, sticky="nsew")
         self.location_entry = Entry(self, width = 20)
         self.location_entry.grid(row = 0, column = 1, sticky="nsew")
         Button(self, text = "Get Weather", command = self.get_weather).grid(row = 0, column = 2, sticky = "nsew")
 
-        ##### This is the popup menu for forecast day selection ######
+        # Popup menu for forecast day selection
         self.n = StringVar()
         self.n.trace('w', self.get_forecast_change) #This is for detecting a change in popup menu
         self.forecast_day_chooser = ttk.Combobox(self, width = 18, textvariable = self.n)
@@ -32,13 +36,29 @@ class WeatherApp(Tk):
         self.weather_labels = []
         self.create_weather_labels(row = 2, column = 0, columnspan = 3)
 
-##### This reloads the weather entirely, because the forecast day was changed in the popup menu #####
     def get_forecast_change(self, index, value, op): # what is the purpose for passing values - Karan
+        """
+        Callback for handling forecast day changes in the popup menu.
+
+        Reloads the weather data when the forecast day is changed.
+
+        Args:
+            index (int): The index of the selected day.
+            value (str): The value of the selected day.
+            op (str): The type of operation (unused).
+        """
         if self.location_entry.get(): #setting the current value triggers the change, so we check to make sure there's a location
             self.get_weather()
 
-##### This creates day names for future forecast days, starting with today and tomorrow
     def create_forecast_options(self): # The naming can be better instead of mentioning days, mention the date instead - Karan
+        """
+        Create forecast options for the popup menu.
+
+        Generates a list of day names for future forecast days.
+
+        Returns:
+            tuple: A tuple of forecast day options.
+        """
         try:
             dt = datetime.now()
             day_chooser_values = [" Today's Forecast", " Tomorrow's Forecast"]
@@ -54,6 +74,14 @@ class WeatherApp(Tk):
             messagebox.showerror("Error", f"Error creating forecast options: {e}")
 
     def create_weather_labels(self, row, column, columnspan):
+        """
+        Create and layout weather labels.
+
+        Args:
+            row (int): The starting row for labels.
+            column (int): The starting column for labels.
+            columnspan (int): The number of columns each label spans.
+        """
         labels = [ # List of dictionaries of labels with its respective values
             {"current_label" : "", # current label
             "row" : row, "column" : column, "columnspan" : columnspan}, 
@@ -114,6 +142,7 @@ class WeatherApp(Tk):
             self.weather_labels.append({label_name : label})
 
     def get_weather(self):
+        """Get weather data and update the GUI."""
         try:
             location = self.location_entry.get()
 
@@ -133,6 +162,13 @@ class WeatherApp(Tk):
             messagebox.showerror("Error", f"Error geting weather: {e}")
 
     def update_all_labels(self, current_weather, forecast_weather):
+        """
+        Update all weather labels with new data.
+
+        Args:
+            current_weather (dict): Current weather data.
+            forecast_weather (dict): Forecasted weather data.
+        """
         label_commands = [
             {"current_label"                : f"Current Weather"}, 
             {"current_weather_icon"         : f"http:{current_weather['condition']['icon']}"}, 
@@ -162,15 +198,36 @@ class WeatherApp(Tk):
                 self.update_label(label, update_command) 
 
     def update_label(self, label, text):
+        """
+        Update a label's text.
+
+        Args:
+            label (Label): The label widget to update.
+            text (str): The new text for the label.
+        """
         label.config(text = text)
 
     def update_icon_label(self, label, icon_url):
+        """
+        Update a label with an icon image from a URL.
+
+        Args:
+            label (Label): The label widget to update with an icon.
+            icon_url (str): The URL of the icon image.
+        """
         self.download_icon(icon_url, "temp_icon.png")
         icon = ImageTk.PhotoImage(file = "temp_icon.png")
         label.config(image = icon)
         label.image = icon
 
     def download_icon(self, url, filename):
+        """
+        Download an icon image from a URL.
+
+        Args:
+            url (str): The URL of the icon image to download.
+            filename (str): The name of the file to save the icon.
+        """
         try:
             response = requests.get(url, stream = True)
             if response.status_code == 200:
@@ -183,7 +240,17 @@ class WeatherApp(Tk):
             messagebox.showerror("Error", f"Error occurred downloading icon: {e}")
 
 class WeatherData:
+    """Class to fetch weather data using an API."""
+
     def __init__(self, API_KEY, N_DAYS_FORECAST, location):
+        """
+        Initialize the WeatherData class.
+
+        Args:
+            API_KEY (str): The API key for weather data.
+            N_DAYS_FORECAST (int): The number of days to forecast.
+            location (str): The location for weather data retrieval.
+        """
         self.API_KEY = API_KEY
         self.N_DAYS_FORECAST = N_DAYS_FORECAST
         self.location = location
@@ -191,6 +258,12 @@ class WeatherData:
         self.forecast_weather = []
 
     def fetch_data(self, day):
+        """
+        Fetch weather data from the API and store it.
+
+        Args:
+            day (int): The index of the selected forecast day.
+        """
         try:
             url = f"http://api.weatherapi.com/v1/forecast.json?key={self.API_KEY}&q={self.location}&days={self.N_DAYS_FORECAST}&aqi=no&alerts=no"
             response = requests.get(url)
@@ -204,9 +277,21 @@ class WeatherData:
             messagebox.showerror("Error", f"Error fetching weather data: {e}")
 
     def get_current_weather(self):
+        """
+        Get the current weather data.
+
+        Returns:
+            dict: Current weather data.
+        """
         return self.current_weather
 
     def get_forecast_weather(self):
+        """
+        Get the forecasted weather data.
+
+        Returns:
+            dict: Forecasted weather data.
+        """
         return self.forecast_weather
 
 if __name__ == "__main__":
