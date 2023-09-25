@@ -15,7 +15,7 @@ class WeatherApp(Tk):
         """Initialize the WeatherApp class."""
         super().__init__()
         self.title("Weather App")
-        self.geometry("1500x580")
+        self.geometry("1500x500")
         self.create_widgets()
 
     def create_widgets(self):
