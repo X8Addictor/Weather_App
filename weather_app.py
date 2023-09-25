@@ -25,32 +25,8 @@ class WeatherApp(Tk):
         self.location_entry.grid(row = 0, column = 1, sticky="nsew")
         Button(self, text = "Get Weather", command = self.get_weather).grid(row = 0, column = 2, sticky = "nsew")
 
-
-        ##### This is the popup menu for forecast day selection ######
-        #self.n = StringVar()
-        #self.n.trace('w', self.get_forecast_change) #This is for detecting a change in popup menu
-        #self.forecast_day_chooser = ttk.Combobox(self, width = 18, textvariable = self.n)
-        #self.forecast_day_chooser["values"] = self.create_forecast_options()
-        #self.forecast_day_chooser.grid(column = 0, row = 1, sticky="nsew")
-        #self.forecast_day_chooser.current(0)
-        ##############################################################
-
         self.weather_labels = []
         self.create_weather_labels(row = 2, column = 0, columnspan = 1)
-
-    def get_forecast_change(self, index, value, op): # what is the purpose for passing values - Karan
-        """
-        Callback for handling forecast day changes in the popup menu.
-
-        Reloads the weather data when the forecast day is changed.
-
-        Args:
-            index (int): The index of the selected day.
-            value (str): The value of the selected day.
-            op (str): The type of operation (unused).
-        """
-        if self.location_entry.get(): #setting the current value triggers the change, so we check to make sure there's a location
-            self.get_weather()
 
     def create_forecast_options(self): # The naming can be better instead of mentioning days, mention the date instead - Karan
         """
@@ -74,6 +50,7 @@ class WeatherApp(Tk):
             return tuple(day_chooser_values)
         except Exception as e:
             messagebox.showerror("Error", f"Error creating forecast options: {e}")
+            raise e
 
     def create_weather_labels(self, row, column, columnspan):
         """
@@ -354,11 +331,12 @@ class WeatherApp(Tk):
 
             self.update_all_labels(current_weather, forecast_weather, forecast_weather_list)
         except ValueError as e:
+            messagebox.showerror("Error", f"{e}")
             raise e
-            #messagebox.showerror("Error", f"{e}")
+
         except Exception as e:
+            messagebox.showerror("Error", f"Error geting weather: {e}")
             raise e
-            #messagebox.showerror("Error", f"Error geting weather: {e}")
 
 
     def update_all_labels(self, current_weather, forecast_weather, forecast_weather_list):
