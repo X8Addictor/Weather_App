@@ -1,5 +1,0 @@
-label_commands.append({f"forecast_condition_{day + 2}"           : f"Conditions: {forecast_weather_list[day]['condition']['text']}"})
-            # label_commands.append({f"forecast_max_wind_speed_{day + 2}"      : f"Max Wind: {forecast_weather_list[day]['maxwind_mph']}mph | {forecast_weather_list[day]['maxwind_kph']}kph"})
-            # label_commands.append({f"forecast_avg_humidity_{day + 2}"        : f"Avg Humidity: {forecast_weather_list[day]['avghumidity']}%"})
-            # label_commands.append({f"forecast_rain_chance_{day + 2}"         : f"Chance of Rain: {forecast_weather_list[day]['daily_chance_of_rain']}%"})
-            # label_commands.append({f"forecast_total_precipitation_{day + 2}" : f"Total Precip.: {forecast_weather_list[day]['totalprecip_in']}in | {forecast_weather_list[day]['totalprecip_mm']}mm"})
