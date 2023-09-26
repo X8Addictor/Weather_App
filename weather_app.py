@@ -119,6 +119,7 @@ class WeatherApp(Tk):
         self.create_labels(labels, detailed_forecast_frame)
         detailed_forecast_frame.bind("<Button-1>", lambda event, frame = detailed_forecast_frame: self.update_detailed_forecast(frame))
 
+
     def create_forecast_options(self):
         """
         Create forecast options for the popup menu.
@@ -206,7 +207,10 @@ class WeatherApp(Tk):
             label (Label): The label widget to update.
             text (str): The new text for the label.
         """
-        label.config(text = text)
+        if "Forecast" in text or "Current Weather" in text:
+            label.config(text = text, font = ("Trebuchet MS", 24, "bold underline"), anchor="center")
+        else:
+            label.config(text = text, font = ("Trebuchet MS", 18), anchor="center")
 
     def update_icon_label(self, label, icon_url):
         """
