@@ -31,6 +31,7 @@ class WeatherApp(Tk):
         Label(self, text="Enter City, State or Country: ").grid(row = 0, column = 0, sticky = "nsew")
         self.location_entry = Entry(self, width = 20)
         self.location_entry.grid(row = 0, column = 1, sticky = "nsew")
+        self.bind('<Return>', self.get_weather)
         Button(self, text = "Get Weather", command = self.get_weather).grid(row = 0, column = 2, sticky = "nsew")
 
     def create_labels(self, labels, parent_frame):
@@ -143,7 +144,7 @@ class WeatherApp(Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Error creating forecast options: {e}")
 
-    def get_weather(self):
+    def get_weather(self, *args):
         """Get weather data and update the GUI."""
         try:
             location = self.location_entry.get()
