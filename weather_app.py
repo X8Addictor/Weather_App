@@ -82,6 +82,7 @@ class WeatherApp(Tk):
         Args:
             row (int): The starting row for labels.
             column (int): The starting column for labels.
+            rowspan (int): The number of rows each label spans
             columnspan (int): The number of columns each label spans.
         """
         for day in range(N_DAYS_FORECAST):
@@ -184,7 +185,7 @@ class WeatherApp(Tk):
             label_commands.append({f"forecast_icon_{day + 1}"            : f"http:{forecast_weather_list[day]['condition']['icon']}"})
             label_commands.append({f"forecast_max_temperature_{day + 1}" : f"Max Temp: {forecast_weather_list[day]['maxtemp_f']}°F | {forecast_weather_list[day]['maxtemp_c']}°C"})
             label_commands.append({f"forecast_min_temperature_{day + 1}" : f"Min Temp: {forecast_weather_list[day]['mintemp_f']}°F | {forecast_weather_list[day]['mintemp_c']}°C"})
-        
+
         for label_info, update_command in zip(self.weather_labels, label_commands):
             label_name = list(label_info.keys())[0]
             label = label_info[label_name]
