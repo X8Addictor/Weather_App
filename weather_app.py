@@ -47,18 +47,20 @@ class WeatherApp(Tk):
             self.weather_labels.append({label_name : label})
 
     def update_detailed_forecast(self, frame):
-        # {"forecast_condition"           : f"Conditions: {forecast_weather['condition']['text']}"},
-        # {"forecast_max_wind_speed"      : f"Max Wind: {forecast_weather['maxwind_mph']}mph | {forecast_weather['maxwind_kph']}kph"},
-        # {"forecast_avg_humidity"        : f"Avg Humidity: {forecast_weather['avghumidity']}%"},
-        # {"forecast_rain_chance"         : f"Chance of Rain: {forecast_weather['daily_chance_of_rain']}%"},
-        # {"forecast_total_precipitation" : f"Total Precip.: {forecast_weather['totalprecip_in']}in | {forecast_weather['totalprecip_mm']}mm"}
+        frame_index = self.detailed_forecast_frames.index(frame)
+        day = self.weather_data.get_forecast_weather(frame_index)
 
-        # ({f"forecast_condition_{day + 1}"           : f"Conditions: {forecast_weather_list[day]['condition']['text']}"})
-        # ({f"forecast_max_wind_speed_{day + 1}"      : f"Max Wind: {forecast_weather_list[day]['maxwind_mph']}mph | {forecast_weather_list[day]['maxwind_kph']}kph"})
-        # ({f"forecast_avg_humidity_{day + 1}"        : f"Avg Humidity: {forecast_weather_list[day]['avghumidity']}%"})
-        # ({f"forecast_rain_chance_{day + 1}"         : f"Chance of Rain: {forecast_weather_list[day]['daily_chance_of_rain']}%"})
-        # ({f"forecast_total_precipitation_{day + 1}" : f"Total Precip.: {forecast_weather_list[day]['totalprecip_in']}in | {forecast_weather_list[day]['totalprecip_mm']}mm"})
-        pass
+        labels = [
+            {"detailed_forecast_day"                 : f"{self.create_forecast_options()[day]}"},
+            {"detailed_forecast_icon"                : f"http:{forecast_weather_list[day]['condition']['icon']}"},
+            {"detailed_forecast_condition"           : f"Conditions: {forecast_weather_list[day]['condition']['text']}"},
+            {"detailed_forecast_max_temperature"     : f"Max Temp: {forecast_weather_list[day]['maxtemp_f']}°F | {forecast_weather_list[day]['maxtemp_c']}°C"},
+            {"detailed_forecast_min_temperature"     : f"Min Temp: {forecast_weather_list[day]['mintemp_f']}°F | {forecast_weather_list[day]['mintemp_c']}°C"},
+            {"detailed_forecast_max_wind_speed"      : f"Max Wind: {forecast_weather_list[day]['maxwind_mph']} mph | {forecast_weather_list[day]['maxwind_kph']} kmph"},
+            {"detailed_forecast_avg_humidity"        : f"Avg Humidity: {forecast_weather_list[day]['avghumidity']}%"},
+            {"detailed_forecast_rain_chance"         : f"Chance of Rain: {forecast_weather_list[day]['daily_chance_of_rain']}%"},
+            {"detailed_forecast_total_precipitation" : f"Total Precip.: {forecast_weather_list[day]['totalprecip_in']}in | {forecast_weather_list[day]['totalprecip_mm']}mm"}
+        ]
 
     def create_current_labels(self, row, column, rowspan, columnspan):
         current_weather_frame = Frame(self)
@@ -148,14 +150,14 @@ class WeatherApp(Tk):
             if not location:
                 raise ValueError("Location Cannot be empty!")
 
-            weather_data = WeatherData(API_KEY, N_DAYS_FORECAST, location)
-            weather_data.fetch_data(0)
+            self.weather_data = WeatherData(API_KEY, N_DAYS_FORECAST, location)
+            self.weather_data.fetch_data()
 
-            current_weather = weather_data.get_current_weather()
+            current_weather = self.weather_data.get_current_weather()
             forecast_weather_list = []
 
             for n in range(0, N_DAYS_FORECAST):
-                forecast_weather_list.append(weather_data.get_forecast_weather(n))
+                forecast_weather_list.append(self.weather_data.get_forecast_weather(n))
 
             self.update_all_labels(current_weather, forecast_weather_list)
         except ValueError as e:
@@ -176,7 +178,7 @@ class WeatherApp(Tk):
             {"current_weather_icon" : f"http:{current_weather['condition']['icon']}"},
             {"current_condition"    : f"Conditions: {current_weather['condition']['text']}"},
             {"current_temperature"  : f"Temperature: {current_weather['temp_f']}°F | {current_weather['temp_c']}°C"},
-            {"current_wind_speed"   : f"Wind: {current_weather['wind_mph']}mph | {current_weather['wind_kph']}kph {current_weather['wind_dir']}"},
+            {"current_wind_speed"   : f"Wind: {current_weather['wind_mph']} mph | {current_weather['wind_kph']} kmph {current_weather['wind_dir']}"},
             {"current_humidity"     : f"Humidity: {current_weather['humidity']}%"},
         ]
 
@@ -257,7 +259,7 @@ class WeatherData:
         self.current_weather = []
         self.forecast_weather = []
 
-    def fetch_data(self, day):
+    def fetch_data(self):
         """
         Fetch weather data from the API and store it.
 
@@ -270,7 +272,6 @@ class WeatherData:
             if response.status_code == 200:
                 self.weather_data = json.loads(response.content)
                 self.current_weather = self.weather_data["current"]
-                self.forecast_weather = self.weather_data["forecast"]["forecastday"][day]["day"]
             else:
                 raise Exception(f"API request failed with status code {response.status_code}")
         except Exception as e:
