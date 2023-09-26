@@ -28,9 +28,9 @@ class WeatherApp(Tk):
 
     def create_input_section(self):
         """ """
-        Label(self, text="Enter City, State or Country: ").grid(row = 0, column = 0, sticky="nsew")
+        Label(self, text="Enter City, State or Country: ").grid(row = 0, column = 0, sticky = "nsew")
         self.location_entry = Entry(self, width = 20)
-        self.location_entry.grid(row = 0, column = 1, sticky="nsew")
+        self.location_entry.grid(row = 0, column = 1, sticky = "nsew")
         Button(self, text = "Get Weather", command = self.get_weather).grid(row = 0, column = 2, sticky = "nsew")
 
     def create_labels(self, labels, parent_frame):
@@ -62,15 +62,15 @@ class WeatherApp(Tk):
 
     def create_current_labels(self, row, column, rowspan, columnspan):
         current_weather_frame = Frame(self)
-        current_weather_frame.grid(row = row, column = column, rowspan = rowspan, columnspan = columnspan + 1, sticky="nsew")
+        current_weather_frame.grid(row = row, column = column, rowspan = rowspan, columnspan = columnspan + 1, sticky = "nsew")
 
         labels = [
-            {"current_label": "", "row": 0, "column": 0, "rowspan": rowspan, "columnspan": columnspan + 1},
-            {"current_weather_icon": "", "row": 1, "column": 0, "rowspan": rowspan + 4, "columnspan": 1},
-            {"current_condition": "", "row": 1, "column": 1, "rowspan": rowspan, "columnspan": columnspan},
-            {"current_temperature": "", "row": 2, "column": 1, "rowspan": rowspan, "columnspan": columnspan},
-            {"current_wind_speed": "", "row": 3, "column": 1, "rowspan": rowspan, "columnspan": columnspan},
-            {"current_humidity": "", "row": 4, "column": 1, "rowspan": rowspan, "columnspan": columnspan},
+            {"current_label"        : "", "row": 0, "column": 0, "rowspan": rowspan,     "columnspan": columnspan + 1},
+            {"current_weather_icon" : "", "row": 1, "column": 0, "rowspan": rowspan + 4, "columnspan": columnspan},
+            {"current_condition"    : "", "row": 1, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
+            {"current_temperature"  : "", "row": 2, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
+            {"current_wind_speed"   : "", "row": 3, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
+            {"current_humidity"     : "", "row": 4, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
         ]
 
         self.create_labels(labels, current_weather_frame)
@@ -89,17 +89,17 @@ class WeatherApp(Tk):
             forecast_frame.grid(row = row + day * 8, column = column, rowspan = rowspan, columnspan = columnspan + 1, sticky="nsew")
 
             labels = [
-                {f"forecast_day_{day + 1}": "", "row": 0, "column": 0, "rowspan": rowspan, "columnspan": columnspan + 1},
-                {f"forecast_icon_{day + 1}": "", "row": 1, "column": 0, "rowspan": rowspan + 2, "columnspan": 1},
-                {f"forecast_max_temperature_{day + 1}": "", "row": 1, "column": 1, "rowspan": rowspan, "columnspan": columnspan},
-                {f"forecast_min_temperature_{day + 1}": "", "row": 2, "column": 1, "rowspan": rowspan, "columnspan": columnspan},
+                {f"forecast_day_{day + 1}"             : "", "row" : 0, "column": 0, "rowspan": rowspan,     "columnspan": columnspan + 1},
+                {f"forecast_icon_{day + 1}"            : "", "row" : 1, "column": 0, "rowspan": rowspan + 2, "columnspan": columnspan},
+                {f"forecast_max_temperature_{day + 1}" : "", "row" : 1, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
+                {f"forecast_min_temperature_{day + 1}" : "", "row" : 2, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
             ]
 
             self.create_labels(labels, forecast_frame)
 
     def create_detailed_forecast_labels(self, row, column, rowspan, columnspan):
         detailed_forecast_frame = Frame(self)
-        detailed_forecast_frame.grid(row = row, column = column + 2, rowspan = rowspan, columnspan = columnspan + 1, sticky="nsew")
+        detailed_forecast_frame.grid(row = row, column = column + 2, rowspan = rowspan, columnspan = columnspan + 1, sticky = "nsew")
 
         labels = [ # List of forecast labels with its respective values
             {"detailed_forecast_day"                 : "", "row" : row,     "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
@@ -138,7 +138,6 @@ class WeatherApp(Tk):
             return tuple(day_chooser_values)
         except Exception as e:
             messagebox.showerror("Error", f"Error creating forecast options: {e}")
-            raise e
 
     def get_weather(self):
         """Get weather data and update the GUI."""
@@ -152,18 +151,18 @@ class WeatherApp(Tk):
             weather_data.fetch_data(0)
 
             current_weather = weather_data.get_current_weather()
-            forecast_weather = weather_data.get_forecast_weather(0)
             forecast_weather_list = []
-            for n in range(1, N_DAYS_FORECAST):
+
+            for n in range(0, N_DAYS_FORECAST):
                 forecast_weather_list.append(weather_data.get_forecast_weather(n))
 
-            self.update_all_labels(current_weather, forecast_weather, forecast_weather_list)
+            self.update_all_labels(current_weather, forecast_weather_list)
         except ValueError as e:
             messagebox.showerror("Error", f"{e}")
         except Exception as e:
             messagebox.showerror("Error", f"Error geting weather: {e}")
 
-    def update_all_labels(self, current_weather, forecast_weather, forecast_weather_list):
+    def update_all_labels(self, current_weather, forecast_weather_list):
         """
         Update all weather labels with new data.
 
@@ -172,19 +171,19 @@ class WeatherApp(Tk):
             forecast_weather (dict): Forecasted weather data.
         """
         label_commands = [
-            {"current_label"                : f"Current Weather\n {current_weather['last_updated']}"},
-            {"current_weather_icon"         : f"http:{current_weather['condition']['icon']}"},
-            {"current_condition"            : f"Conditions: {current_weather['condition']['text']}"},
-            {"current_temperature"          : f"Temperature: {current_weather['temp_f']}°F | {current_weather['temp_c']}°C"},
-            {"current_wind_speed"           : f"Wind: {current_weather['wind_mph']}mph | {current_weather['wind_kph']}kph {current_weather['wind_dir']}"},
-            {"current_humidity"             : f"Humidity: {current_weather['humidity']}%"},
+            {"current_label"        : f"Current Weather\n {current_weather['last_updated']}"},
+            {"current_weather_icon" : f"http:{current_weather['condition']['icon']}"},
+            {"current_condition"    : f"Conditions: {current_weather['condition']['text']}"},
+            {"current_temperature"  : f"Temperature: {current_weather['temp_f']}°F | {current_weather['temp_c']}°C"},
+            {"current_wind_speed"   : f"Wind: {current_weather['wind_mph']}mph | {current_weather['wind_kph']}kph {current_weather['wind_dir']}"},
+            {"current_humidity"     : f"Humidity: {current_weather['humidity']}%"},
         ]
 
         for day in range(0, N_DAYS_FORECAST - 1):
-            label_commands.append({f"forecast_day_{day + 1}"                 : f"{self.create_forecast_options()[day]}"})
-            label_commands.append({f"forecast_icon_{day + 1}"                : f"http:{forecast_weather_list[day]['condition']['icon']}"})
-            label_commands.append({f"forecast_max_temperature_{day + 1}"     : f"Max Temp: {forecast_weather_list[day]['maxtemp_f']}°F | {forecast_weather_list[day]['maxtemp_c']}°C"})
-            label_commands.append({f"forecast_min_temperature_{day + 1}"     : f"Min Temp: {forecast_weather_list[day]['mintemp_f']}°F | {forecast_weather_list[day]['mintemp_c']}°C"})
+            label_commands.append({f"forecast_day_{day + 1}"             : f"{self.create_forecast_options()[day]}"})
+            label_commands.append({f"forecast_icon_{day + 1}"            : f"http:{forecast_weather_list[day]['condition']['icon']}"})
+            label_commands.append({f"forecast_max_temperature_{day + 1}" : f"Max Temp: {forecast_weather_list[day]['maxtemp_f']}°F | {forecast_weather_list[day]['maxtemp_c']}°C"})
+            label_commands.append({f"forecast_min_temperature_{day + 1}" : f"Min Temp: {forecast_weather_list[day]['mintemp_f']}°F | {forecast_weather_list[day]['mintemp_c']}°C"})
         
         for label_info, update_command in zip(self.weather_labels, label_commands):
             label_name = list(label_info.keys())[0]
