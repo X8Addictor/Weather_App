@@ -8,6 +8,7 @@ from PIL import Image, ImageTk
 API_KEY = "04cefdc70dc64f37bf001213232309"
 N_DAYS_FORECAST = 8
 BACKGROUND_COLOR = "#0096FF"
+LIGHT_BG_COLOR = "#88cffa"
 
 class WeatherApp(Tk):
     """A simple weather application using Tkinter for the GUI."""
@@ -221,9 +222,9 @@ class WeatherApp(Tk):
         elif "Current Weather" in text:
             label.config(text = text, bg=BACKGROUND_COLOR, fg = "White", font = ("Trebuchet MS", 21, "underline"), anchor="center")
         elif "Min Temp" in text:
-            label.config(text = text, bg=BACKGROUND_COLOR, fg = "Blue", font = ("Trebuchet MS", 18), anchor="center")
+            label.config(text = text, bg=LIGHT_BG_COLOR, fg = "Blue", font = ("Trebuchet MS", 18), anchor="center")
         elif "Max Temp" in text:
-            label.config(text = text, bg=BACKGROUND_COLOR, fg = "#942211", font = ("Trebuchet MS", 18), anchor="center")
+            label.config(text = text, bg=LIGHT_BG_COLOR, fg = "#942211", font = ("Trebuchet MS", 18), anchor="center")
         else:
             label.config(text = text, bg=BACKGROUND_COLOR, fg = "White", font = ("Trebuchet MS", 18), anchor="center")
     def update_icon_label(self, label, icon_url):
