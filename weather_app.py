@@ -18,9 +18,9 @@ class WeatherApp(Tk):
         self.title("Weather App")
         self.geometry("750x1000")
         self.configure(bg=BACKGROUND_COLOR)
-        self.cloudimg = PhotoImage(file="cloud.png")
-        self.cloudlabel = Label(self, image = self.cloudimg, bg=BACKGROUND_COLOR)
-        self.cloudlabel.place( x = 0, y = 0, relwidth=1, relheight=1 )
+        self.cloud_img = PhotoImage(file="cloud.png")
+        self.cloud_label = Label(self, image = self.cloud_img, bg=BACKGROUND_COLOR)
+        self.cloud_label.place( x = 0, y = 0, relwidth=1, relheight=1 )
         self.weather_labels = []
         self.create_widgets()
 
