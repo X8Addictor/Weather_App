@@ -24,9 +24,9 @@ class WeatherApp(Tk):
         self.title("Weather App")
         self.geometry("750x1000")
         self.configure(bg=BACKGROUND_COLOR)
-        self.cloud_img = PhotoImage(file="cloud.png")
-        self.cloud_label = Label(self, image = self.cloud_img, bg=BACKGROUND_COLOR)
-        self.cloud_label.place( x = 0, y = 0, relwidth=1, relheight=1 )
+        #self.cloud_img = PhotoImage(file="cloud.png")
+        #self.cloud_label = Label(self, image = self.cloud_img, bg=BACKGROUND_COLOR)
+        #self.cloud_label.place( x = 0, y = 0, relwidth=1, relheight=1 )
         self.weather_labels = []
         self.create_widgets()
 
@@ -39,11 +39,11 @@ class WeatherApp(Tk):
 
     def create_input_section(self):
         """ """
-        Label(self, text="Enter City, State or Country: ").grid(row = 0, column = 0, sticky = "nsew")
-        self.location_entry = Entry(self, width = 20)
+        Label(self, text="Enter City, State or Country: ", bg=BACKGROUND_COLOR).grid(row = 0, column = 0, sticky = "nsew")
+        self.location_entry = Entry(self, width = 20, bg=BACKGROUND_COLOR)
         self.location_entry.grid(row = 0, column = 1, sticky = "nsew")
         self.bind('<Return>', self.get_weather)
-        Button(self, text = "Get Weather", command = self.get_weather).grid(row = 0, column = 2, sticky = "nsew")
+        Button(self, text = "Get Weather", bg=BACKGROUND_COLOR, command = self.get_weather).grid(row = 0, column = 2, sticky = "nsew")
 
     def create_labels(self, labels, parent_frame):
         for label_info in labels:
