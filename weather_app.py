@@ -7,6 +7,7 @@ from PIL import Image, ImageTk
 
 API_KEY = "04cefdc70dc64f37bf001213232309"
 N_DAYS_FORECAST = 8
+BACKGROUND_COLOR = "#0096FF"
 
 class WeatherApp(Tk):
     """A simple weather application using Tkinter for the GUI."""
@@ -16,6 +17,10 @@ class WeatherApp(Tk):
         super().__init__()
         self.title("Weather App")
         self.geometry("750x1000")
+        self.configure(bg=BACKGROUND_COLOR)
+        self.cloudimg = PhotoImage(file="cloud.png")
+        self.cloudlabel = Label(self, image = self.cloudimg, bg=BACKGROUND_COLOR)
+        self.cloudlabel.place( x = 0, y = 0, relwidth=1, relheight=1 )
         self.weather_labels = []
         self.create_widgets()
 
@@ -43,7 +48,7 @@ class WeatherApp(Tk):
             label_rowspan = label_info["rowspan"]
             label_columnspan = label_info["columnspan"]
 
-            label = Label(parent_frame, text = label_text)
+            label = Label(parent_frame, text = label_text, fg = "Black", bg=BACKGROUND_COLOR)
             label.grid(row = label_row, column = label_column, rowspan = label_rowspan, columnspan = label_columnspan, sticky = "nsew")
             self.weather_labels.append({label_name : label})
 
@@ -65,6 +70,7 @@ class WeatherApp(Tk):
 
     def create_current_labels(self, row, column, rowspan, columnspan):
         current_weather_frame = Frame(self)
+        current_weather_frame.config(bg=BACKGROUND_COLOR)
         current_weather_frame.grid(row = row, column = column, rowspan = rowspan, columnspan = columnspan + 1, sticky = "nsew")
 
         labels = [
@@ -90,6 +96,7 @@ class WeatherApp(Tk):
         """
         for day in range(N_DAYS_FORECAST):
             forecast_frame = Frame(self)
+            forecast_frame.config(bg=BACKGROUND_COLOR)
             forecast_frame.grid(row = row + day * 8, column = column, rowspan = rowspan, columnspan = columnspan + 1, sticky="nsew")
 
             labels = [
@@ -103,6 +110,7 @@ class WeatherApp(Tk):
 
     def create_detailed_forecast_labels(self, row, column, rowspan, columnspan):
         detailed_forecast_frame = Frame(self)
+        detailed_forecast_frame.config(bg=BACKGROUND_COLOR)
         detailed_forecast_frame.grid(row = row, column = column + 2, rowspan = rowspan, columnspan = columnspan + 1, sticky = "nsew")
 
         labels = [ # List of forecast labels with its respective values
@@ -176,7 +184,7 @@ class WeatherApp(Tk):
             forecast_weather (dict): Forecasted weather data.
         """
         label_commands = [
-            {"current_label"        : f"Current Weather\n {current_weather['last_updated']}"},
+            {"current_label"        : f"Current Weather\n{current_weather['last_updated']}"},
             {"current_weather_icon" : f"http:{current_weather['condition']['icon']}"},
             {"current_condition"    : f"Conditions: {current_weather['condition']['text']}"},
             {"current_temperature"  : f"Temperature: {current_weather['temp_f']}°F | {current_weather['temp_c']}°C"},
@@ -208,11 +216,16 @@ class WeatherApp(Tk):
             label (Label): The label widget to update.
             text (str): The new text for the label.
         """
-        if "Forecast" in text or "Current Weather" in text:
-            label.config(text = text, font = ("Trebuchet MS", 24, "bold underline"), anchor="center")
+        if "Forecast" in text:
+            label.config(text = text, bg=BACKGROUND_COLOR, fg = "White", font = ("Trebuchet MS", 21, "underline"), anchor="w")
+        elif "Current Weather" in text:
+            label.config(text = text, bg=BACKGROUND_COLOR, fg = "White", font = ("Trebuchet MS", 21, "underline"), anchor="center")
+        elif "Min Temp" in text:
+            label.config(text = text, bg=BACKGROUND_COLOR, fg = "Blue", font = ("Trebuchet MS", 18), anchor="center")
+        elif "Max Temp" in text:
+            label.config(text = text, bg=BACKGROUND_COLOR, fg = "#942211", font = ("Trebuchet MS", 18), anchor="center")
         else:
-            label.config(text = text, font = ("Trebuchet MS", 18), anchor="center")
-
+            label.config(text = text, bg=BACKGROUND_COLOR, fg = "White", font = ("Trebuchet MS", 18), anchor="center")
     def update_icon_label(self, label, icon_url):
         """
         Update a label with an icon image from a URL.
