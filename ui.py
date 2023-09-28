@@ -56,6 +56,7 @@ class WeatherAppUI:
         self.location_entry = Entry(self.root, width=20, bg = BACKGROUND_COLOR)
         self.location_entry.grid(row = 0, column = 1, sticky = "nsew")
         self.location_entry.bind('<Return>', self.get_weather)
+        self.location_entry.focus_set()
         Button(self.root, text="Get Weather", bg = BACKGROUND_COLOR, command=self.get_weather).grid(row = 0, column = 2, sticky = "nsew")
 
     def create_labels(self, labels, parent_frame):
@@ -90,10 +91,10 @@ class WeatherAppUI:
         Args:
             frame (Frame): The frame that was clicked to trigger the update.
         """
-        frame_index = self.forecast_frames.index(frame)
+        frame_index = self.forecast_frames.index(frame) - 1
 
         label_commands = [
-            {"detailed_forecast_day": f"{self.create_forecast_options()[frame_index]}"},
+            {"detailed_forecast_day": f"{self.create_forecast_options()[frame_index]} Details"},
             {"detailed_forecast_icon": f"http:{self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['condition']['icon']}"},
             {"detailed_forecast_condition": f"Conditions: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['condition']['text']}"},
             {"detailed_forecast_max_temperature": f"Max Temp: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxtemp_f']}°F | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxtemp_c']}°C"},
@@ -183,7 +184,7 @@ class WeatherAppUI:
         temperature, wind speed, humidity, rain chance, and total precipitation. The labels are placed within the specified
         grid layout.
         """
-        
+
         detailed_forecast_frame = Frame(self.root)
         detailed_forecast_frame.config(bg=BACKGROUND_COLOR)
         detailed_forecast_frame.grid(row = row, column = column + 3, rowspan = rowspan + 1, columnspan = columnspan + 2, sticky = "nsew")
@@ -289,8 +290,10 @@ class WeatherAppUI:
             label (Label): The label widget to update.
             text (str): The new text for the label.
         """
-        if "Forecast" in text:
+        if "Forecast" in text and "Details" not in text:
             label.config(text = text, bg=BACKGROUND_COLOR, fg = FORECAST_COLOR, font = ("Trebuchet MS", 21, "underline"), anchor="w")
+        elif "Forecast" in text and "Details" in text:
+            label.config(text = text, bg=BACKGROUND_COLOR, fg = FORECAST_COLOR, font = ("Trebuchet MS", 21, "underline"), anchor="center")
         elif "Current Weather" in text:
             label.config(text = text, bg=BACKGROUND_COLOR, fg = CURRENT_WEATHER_COLOR, font = ("Trebuchet MS", 21, "underline"), anchor="center")
         elif "Min Temp" in text:
@@ -299,7 +302,7 @@ class WeatherAppUI:
             label.config(text = text, bg=LIGHT_BG_COLOR, fg = MAX_TEMP_COLOR, font = ("Trebuchet MS", 18), anchor="center")
         else:
             label.config(text = text, bg=BACKGROUND_COLOR, fg = DEFAULT_TEXT_COLOR, font = ("Trebuchet MS", 18), anchor="center")
-    
+
     def update_icon_label(self, label, icon_url):
         """
         Update a label with an icon image from a URL.
