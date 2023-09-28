@@ -5,8 +5,11 @@ from tkinter import *
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 
+# Constants for 
 API_KEY = "04cefdc70dc64f37bf001213232309"
 N_DAYS_FORECAST = 8
+
+# Constants for color
 BACKGROUND_COLOR = "#0096FF"
 LIGHT_BG_COLOR = "#88cffa"
 MAX_TEMP_COLOR = "#942211"
@@ -19,15 +22,18 @@ class WeatherApp(Tk):
     """A simple weather application using Tkinter for the GUI."""
 
     def __init__(self):
-        """Initialize the WeatherApp class."""
+        """
+        Initialize the WeatherApp class.
+
+        Creates the main application window and sets up the initial UI.
+        """
         super().__init__()
         self.title("Weather App")
         self.geometry("750x1000")
         self.configure(bg=BACKGROUND_COLOR)
-        #self.cloud_img = PhotoImage(file="cloud.png")
-        #self.cloud_label = Label(self, image = self.cloud_img, bg=BACKGROUND_COLOR)
-        #self.cloud_label.place( x = 0, y = 0, relwidth=1, relheight=1 )
         self.weather_labels = []
+        self.detailed_forecast_labels = []
+        self.forecast_frames = []
         self.create_widgets()
 
     def create_widgets(self):
@@ -38,7 +44,11 @@ class WeatherApp(Tk):
         self.create_detailed_forecast_labels(row = 2, column = 0, rowspan = 1, columnspan = 1)
 
     def create_input_section(self):
-        """ """
+        """
+        Create and layout input section.
+
+        This section includes a label, an entry field, and a "Get Weather" button.
+        """
         Label(self, text="Enter City, State or Country: ", bg=BACKGROUND_COLOR).grid(row = 0, column = 0, sticky = "nsew")
         self.location_entry = Entry(self, width = 20, bg=BACKGROUND_COLOR)
         self.location_entry.grid(row = 0, column = 1, sticky = "nsew")
@@ -46,6 +56,13 @@ class WeatherApp(Tk):
         Button(self, text = "Get Weather", bg=BACKGROUND_COLOR, command = self.get_weather).grid(row = 0, column = 2, sticky = "nsew")
 
     def create_labels(self, labels, parent_frame):
+        """
+        Create and layout labels within a parent frame.
+
+        Args:
+            labels (list): A list of dictionaries containing label information.
+            parent_frame (Frame): The parent frame to place labels in.
+        """
         for label_info in labels:
             label_name = list(label_info.keys())[0]
             label_text = label_info[label_name]
@@ -55,26 +72,58 @@ class WeatherApp(Tk):
             label_columnspan = label_info["columnspan"]
 
             label = Label(parent_frame, text = label_text, fg = "Black", bg=BACKGROUND_COLOR)
+            label.bind("<Button-1>", lambda event, frame = parent_frame: self.update_detailed_forecast(frame)) # Created a lambda function directly within label.bind
             label.grid(row = label_row, column = label_column, rowspan = label_rowspan, columnspan = label_columnspan, sticky = "nsew")
-            self.weather_labels.append({label_name : label})
+
+            if "detailed_forecast" in label_name:
+                self.detailed_forecast_labels.append({label_name : label})
+            else:
+                self.weather_labels.append({label_name : label})
 
     def update_detailed_forecast(self, frame):
-        frame_index = self.detailed_forecast_frames.index(frame)
-        day = self.weather_data.get_forecast_weather(frame_index)
+        """
+        Update detailed forecast labels based on the selected frame.
 
-        labels = [
-            {"detailed_forecast_day"                 : f"{self.create_forecast_options()[day]}"},
-            {"detailed_forecast_icon"                : f"http:{forecast_weather_list[day]['condition']['icon']}"},
-            {"detailed_forecast_condition"           : f"Conditions: {forecast_weather_list[day]['condition']['text']}"},
-            {"detailed_forecast_max_temperature"     : f"Max Temp: {forecast_weather_list[day]['maxtemp_f']}°F | {forecast_weather_list[day]['maxtemp_c']}°C"},
-            {"detailed_forecast_min_temperature"     : f"Min Temp: {forecast_weather_list[day]['mintemp_f']}°F | {forecast_weather_list[day]['mintemp_c']}°C"},
-            {"detailed_forecast_max_wind_speed"      : f"Max Wind: {forecast_weather_list[day]['maxwind_mph']} mph | {forecast_weather_list[day]['maxwind_kph']} kmph"},
-            {"detailed_forecast_avg_humidity"        : f"Avg Humidity: {forecast_weather_list[day]['avghumidity']}%"},
-            {"detailed_forecast_rain_chance"         : f"Chance of Rain: {forecast_weather_list[day]['daily_chance_of_rain']}%"},
-            {"detailed_forecast_total_precipitation" : f"Total Precip.: {forecast_weather_list[day]['totalprecip_in']}in | {forecast_weather_list[day]['totalprecip_mm']}mm"}
+        Args:
+            frame (Frame): The frame that was clicked to trigger the update.
+        """
+        frame_index = self.forecast_frames.index(frame)
+
+        label_commands = [
+            {"detailed_forecast_day": f"{self.create_forecast_options()[frame_index]}"},
+            {"detailed_forecast_icon": f"http:{self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['condition']['icon']}"},
+            {"detailed_forecast_condition": f"Conditions: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['condition']['text']}"},
+            {"detailed_forecast_max_temperature": f"Max Temp: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxtemp_f']}°F | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxtemp_c']}°C"},
+            {"detailed_forecast_min_temperature": f"Min Temp: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['mintemp_f']}°F | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['mintemp_c']}°C"},
+            {"detailed_forecast_max_wind_speed": f"Max Wind: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxwind_mph']} mph | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxwind_kph']} kmph"},
+            {"detailed_forecast_avg_humidity": f"Avg Humidity: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['avghumidity']}%"},
+            {"detailed_forecast_rain_chance": f"Chance of Rain: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['daily_chance_of_rain']}%"},
+            {"detailed_forecast_total_precipitation": f"Total Precip.: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['totalprecip_in']}in | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['totalprecip_mm']}mm"}
         ]
 
+        for label_info, update_command in zip(self.detailed_forecast_labels, label_commands):
+            label_name = list(label_info.keys())[0]
+            label = label_info[label_name]
+            update_command = update_command[label_name]
+
+            if "http:" in update_command:
+                self.update_icon_label(label, update_command)
+            else:
+                self.update_label(label, update_command)
+
     def create_current_labels(self, row, column, rowspan, columnspan):
+        """
+        Create and layout the current weather labels.
+
+        Args:
+            row (int): The starting row for the current weather labels.
+            column (int): The starting column for the current weather labels.
+            rowspan (int): The number of rows the current weather section spans.
+            columnspan (int): The number of columns the current weather section spans.
+
+        This function creates a frame to display the current weather information, including labels for weather conditions,
+        temperature, wind speed, and humidity. The labels are placed within the specified grid layout.
+        """
         current_weather_frame = Frame(self)
         current_weather_frame.config(bg=BACKGROUND_COLOR)
         current_weather_frame.grid(row = row, column = column, rowspan = rowspan, columnspan = columnspan + 1, sticky = "nsew")
@@ -113,11 +162,27 @@ class WeatherApp(Tk):
             ]
 
             self.create_labels(labels, forecast_frame)
+            forecast_frame.bind("<Button-1>", lambda event, frame = forecast_frame: self.update_detailed_forecast(frame))
+            self.forecast_frames.append(forecast_frame)
 
     def create_detailed_forecast_labels(self, row, column, rowspan, columnspan):
+        """
+        Create and layout detailed forecast labels.
+
+        Args:
+            row (int): The starting row for the detailed forecast labels.
+            column (int): The starting column for the detailed forecast labels.
+            rowspan (int): The number of rows the detailed forecast section spans.
+            columnspan (int): The number of columns the detailed forecast section spans.
+
+        This function creates a frame to display detailed forecast information, including labels for day, weather conditions,
+        temperature, wind speed, humidity, rain chance, and total precipitation. The labels are placed within the specified
+        grid layout.
+        """
+        
         detailed_forecast_frame = Frame(self)
         detailed_forecast_frame.config(bg=BACKGROUND_COLOR)
-        detailed_forecast_frame.grid(row = row, column = column + 2, rowspan = rowspan, columnspan = columnspan + 1, sticky = "nsew")
+        detailed_forecast_frame.grid(row = row, column = column + 3, rowspan = rowspan, columnspan = columnspan + 1, sticky = "nsew")
 
         labels = [ # List of forecast labels with its respective values
             {"detailed_forecast_day"                 : "", "row" : row,     "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
@@ -132,8 +197,6 @@ class WeatherApp(Tk):
         ]
 
         self.create_labels(labels, detailed_forecast_frame)
-        detailed_forecast_frame.bind("<Button-1>", lambda event, frame = detailed_forecast_frame: self.update_detailed_forecast(frame))
-
 
     def create_forecast_options(self):
         """
@@ -284,12 +347,7 @@ class WeatherData:
         self.forecast_weather = []
 
     def fetch_data(self):
-        """
-        Fetch weather data from the API and store it.
-
-        Args:
-            day (int): The index of the selected forecast day.
-        """
+        """Fetch weather data from the API and store it."""
         try:
             url = f"http://api.weatherapi.com/v1/forecast.json?key={self.API_KEY}&q={self.location}&days={self.N_DAYS_FORECAST}&aqi=no&alerts=no"
             response = requests.get(url)
