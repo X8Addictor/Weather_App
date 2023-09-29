@@ -201,36 +201,116 @@ class WeatherAppUI:
 
     def update_all_labels(self, current_weather, forecast_weather_list):
         """
-        Update all weather labels with new data.
+        Update all weather labels with current and forecast weather data.
 
         Args:
             current_weather (dict): Current weather data.
-            forecast_weather (dict): Forecasted weather data.
+            forecast_weather_list (list of dict): List of forecasted weather data for each day.
         """
-        label_commands = [
-            {"current_label"        : f"Current Weather\n{current_weather['last_updated']}"},
-            {"current_weather_icon" : f"http:{current_weather['condition']['icon']}"},
-            {"current_condition"    : f"Conditions: {current_weather['condition']['text']}"},
-            {"current_temperature"  : f"Temperature: {current_weather['temp_f']}°F | {current_weather['temp_c']}°C"},
-            {"current_wind_speed"   : f"Wind: {current_weather['wind_mph']} mph | {current_weather['wind_kph']} kmph {current_weather['wind_dir']}"},
-            {"current_humidity"     : f"Humidity: {current_weather['humidity']}%"},
-        ]
+        try:
+            self.update_current_labels(current_weather)
+            self.update_forecast_labels(forecast_weather_list)
+        except Exception as e:
+            raise WeatherAppError(f"Error updating labels: {e}")
 
-        for day in range(0, N_DAYS_FORECAST - 1):
-            label_commands.append({f"forecast_day_{day + 1}"             : f"{self.create_forecast_options()[day]}"})
-            label_commands.append({f"forecast_icon_{day + 1}"            : f"http:{forecast_weather_list[day]['condition']['icon']}"})
-            label_commands.append({f"forecast_max_temperature_{day + 1}" : f"Max Temp: {forecast_weather_list[day]['maxtemp_f']}°F | {forecast_weather_list[day]['maxtemp_c']}°C"})
-            label_commands.append({f"forecast_min_temperature_{day + 1}" : f"Min Temp: {forecast_weather_list[day]['mintemp_f']}°F | {forecast_weather_list[day]['mintemp_c']}°C"})
+    def update_current_labels(self, current_weather):
+        """
+        Update labels with current weather data.
 
-        for label_info, update_command in zip(self.weather_labels, label_commands):
-            label_name = list(label_info.keys())[0]
-            label = label_info[label_name]
-            update_command = update_command[label_name]
+        Args:
+            current_weather (dict): Current weather data.
+        """
+        try:
+            label_commands = {
+                "current_label"        : f"Current Weather\n{current_weather['last_updated']}",
+                "current_weather_icon" : f"http:{current_weather['condition']['icon']}",
+                "current_condition"    : f"Conditions: {current_weather['condition']['text']}",
+                "current_temperature"  : f"Temperature: {current_weather['temp_f']}°F | {current_weather['temp_c']}°C",
+                "current_wind_speed"   : f"Wind: {current_weather['wind_mph']} mph | {current_weather['wind_kph']} kmph {current_weather['wind_dir']}",
+                "current_humidity"     : f"Humidity: {current_weather['humidity']}%",
+            }
 
-            if "http:" in update_command:
-                self.update_icon_label(label, update_command)
-            else:
-                self.update_label(label, update_command)
+            self.update_labels(label_commands, self.weather_labels)
+        except Exception as e:
+            raise WeatherAppError(f"Error updating current labels: {e}")
+
+    def update_forecast_labels(self, forecast_weather_list):
+        """
+        Update labels with forecasted weather data.
+
+        Args:
+            forecast_weather_list (list of dict): List of forecasted weather data for each day.
+        """
+        try:
+            label_commands = {}
+            for day in range(0, N_DAYS_FORECAST - 1):
+                label_commands.update(self.get_forecast_label_commands(day, forecast_weather_list[day]))
+            self.update_labels(label_commands, self.weather_labels)
+        except Exception as e:
+            raise WeatherAppError(f"Error updating forecast labels: {e}")
+
+    def get_forecast_label_commands(self, day, forecast_weather):
+        """
+        Generate label commands for a specific forecast day.
+
+        Args:
+            day (int): Index of the forecast day.
+            forecast_weather (dict): Forecasted weather data for the day.
+
+        Returns:
+            dict: Label commands for the forecast day.
+        """
+        try:
+            day_label = f"forecast_day_{day + 1}"
+            icon_label = f"forecast_icon_{day + 1}"
+            max_temp_label = f"forecast_max_temperature_{day + 1}"
+            min_temp_label = f"forecast_min_temperature_{day + 1}"
+
+            return {
+                day_label      : f"{self.create_forecast_options()[day]}",
+                icon_label     : f"http:{forecast_weather['condition']['icon']}",
+                max_temp_label : f"Max Temp: {forecast_weather['maxtemp_f']}°F | {forecast_weather['maxtemp_c']}°C",
+                min_temp_label : f"Min Temp: {forecast_weather['mintemp_f']}°F | {forecast_weather['mintemp_c']}°C",
+            }
+        except Exception as e:
+            raise WeatherAppError(f"Error generating forecast label commands: {e}")
+
+    def update_labels(self, label_commands, label_list):
+        """
+        Update labels based on label commands.
+
+        Args:
+            label_commands (dict): Dictionary of label commands.
+            label_list (list of dict): List of label dictionaries.
+        """
+        try:
+            for label_name, update_command in label_commands.items():
+                label = self.find_label_by_name(label_name, label_list)
+                if label and "http:" in update_command:
+                    self.update_icon_label(label, update_command)
+                elif label and "http:" not in update_command:
+                    self.update_label(label, update_command)
+        except Exception as e:
+            raise WeatherAppError(f"Error updating labels: {e}")
+
+    def find_label_by_name(self, label_name, label_list):
+        """
+        Find a label by its name in a list of label dictionaries.
+
+        Args:
+            label_name (str): The name of the label to find.
+            label_list (list of dict): List of label dictionaries.
+
+        Returns:
+            Label or None: The label if found, or None if not found.
+        """
+        try:
+            for label_info in label_list:
+                if label_name in label_info:
+                    return label_info[label_name]
+            return None
+        except Exception as e:
+            raise WeatherAppError(f"Error finding label by name: {e}")
 
     def create_forecast_options(self):
         """
@@ -264,27 +344,19 @@ class WeatherAppUI:
         """
         frame_index = self.forecast_frames.index(frame) - 1
 
-        label_commands = [ # List of update commands for detailed forecast weather labels
-            {"detailed_forecast_day"                 : f"{self.create_forecast_options()[frame_index]} Details"},
-            {"detailed_forecast_icon"                : f"http:{self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['condition']['icon']}"},
-            {"detailed_forecast_condition"           : f"Conditions: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['condition']['text']}"},
-            {"detailed_forecast_max_temperature"     : f"Max Temp: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxtemp_f']}°F | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxtemp_c']}°C"},
-            {"detailed_forecast_min_temperature"     : f"Min Temp: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['mintemp_f']}°F | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['mintemp_c']}°C"},
-            {"detailed_forecast_max_wind_speed"      : f"Max Wind: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxwind_mph']} mph | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxwind_kph']} kmph"},
-            {"detailed_forecast_avg_humidity"        : f"Avg Humidity: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['avghumidity']}%"},
-            {"detailed_forecast_rain_chance"         : f"Chance of Rain: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['daily_chance_of_rain']}%"},
-            {"detailed_forecast_total_precipitation" : f"Total Precip.: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['totalprecip_in']}in | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['totalprecip_mm']}mm"}
-        ]
-
-        for label_info, update_command in zip(self.detailed_forecast_labels, label_commands):
-            label_name = list(label_info.keys())[0]
-            label = label_info[label_name]
-            update_command = update_command[label_name]
-
-            if "http:" in update_command:
-                self.update_icon_label(label, update_command)
-            else:
-                self.update_label(label, update_command)
+        label_commands =  { # List of update commands for detailed forecast weather labels
+        "detailed_forecast_day"                 : f"{self.create_forecast_options()[frame_index]} Details",
+        "detailed_forecast_icon"                : f"http:{self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['condition']['icon']}",
+        "detailed_forecast_condition"           : f"Conditions: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['condition']['text']}",
+        "detailed_forecast_max_temperature"     : f"Max Temp: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxtemp_f']}°F | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxtemp_c']}°C",
+        "detailed_forecast_min_temperature"     : f"Min Temp: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['mintemp_f']}°F | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['mintemp_c']}°C",
+        "detailed_forecast_max_wind_speed"      : f"Max Wind: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxwind_mph']} mph | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxwind_kph']} kmph",
+        "detailed_forecast_avg_humidity"        : f"Avg Humidity: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['avghumidity']}%",
+        "detailed_forecast_rain_chance"         : f"Chance of Rain: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['daily_chance_of_rain']}%",
+        "detailed_forecast_total_precipitation" : f"Total Precip.: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['totalprecip_in']}in | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['totalprecip_mm']}mm"
+        }
+        
+        self.update_labels(label_commands, self.detailed_forecast_labels)
 
     def update_label(self, label, text):
         """
