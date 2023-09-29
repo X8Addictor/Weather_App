@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 from weather_data import WeatherData
 from datetime import datetime, timedelta
+from weather_exception import WeatherAppError
 import requests
 
 # Constants for weather data
@@ -32,11 +33,9 @@ class WeatherAppUI:
         self.root.configure(bg = BACKGROUND_COLOR)
         self.root.title("Weather App")
         self.root.geometry("900x1100")
-
         self.weather_labels = []
         self.detailed_forecast_labels = []
         self.forecast_frames = []
-
         self.create_widgets()
 
     def create_widgets(self):
@@ -53,12 +52,103 @@ class WeatherAppUI:
         This section includes a label, an entry field, and a "Get Weather" button.
         """
         Label(self.root, text="Enter City, State or Country: ").grid(row = 0, column = 0, sticky = "nsew")
-        self.location_entry = Entry(self.root, width=20)
+        self.location_entry = Entry(self.root, width = 20)
         self.location_entry.grid(row = 0, column = 1, sticky = "nsew")
         self.location_entry.bind('<Return>', self.get_weather)
         self.location_entry.focus_set()
-        Button(self.root, text="Get Weather", command=self.get_weather).grid(row = 0, column = 2, sticky = "nsew")
+        Button(self.root, text = "Get Weather", command = self.get_weather).grid(row = 0, column = 2, sticky = "nsew")
 
+    def create_current_labels(self, row, column, rowspan, columnspan):
+        """
+        Create and layout the current weather labels.
+
+        Args:
+            row (int): The starting row for the current weather labels.
+            column (int): The starting column for the current weather labels.
+            rowspan (int): The number of rows the current weather section spans.
+            columnspan (int): The number of columns the current weather section spans.
+
+        This function creates a frame to display the current weather information, including labels for weather conditions,
+        temperature, wind speed, and humidity. The labels are placed within the specified grid layout.
+        """
+        current_weather_frame = Frame(self.root)
+        current_weather_frame.config(bg = BACKGROUND_COLOR)
+        current_weather_frame.grid(row = row, column = column, rowspan = rowspan, columnspan = columnspan + 1, sticky = "nsew")
+
+        labels = [ # List of current weather labels with its respective grid values
+            {"current_label"        : "", "row": 0, "column": 0, "rowspan": rowspan,     "columnspan": columnspan + 1},
+            {"current_weather_icon" : "", "row": 1, "column": 0, "rowspan": rowspan + 4, "columnspan": columnspan},
+            {"current_condition"    : "", "row": 1, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
+            {"current_temperature"  : "", "row": 2, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
+            {"current_wind_speed"   : "", "row": 3, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
+            {"current_humidity"     : "", "row": 4, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
+        ]
+
+        self.create_labels(labels, current_weather_frame)
+        self.forecast_frames.append(current_weather_frame)
+
+    def create_forecast_labels(self, row, column, rowspan, columnspan):
+        """
+        Create and layout forecast weather labels.
+
+        Args:
+            row (int): The starting row for labels.
+            column (int): The starting column for labels.
+            rowspan (int): The number of rows each label spans
+            columnspan (int): The number of columns each label spans.
+
+        This function creates a frame to display the forecast weather information, including labels for weather conditions,
+        temperature, wind speed, and humidity. The labels are placed within the specified grid layout. 
+        Each frame is then binded with mouse button one for event handling.
+        """
+        for day in range(N_DAYS_FORECAST):
+            forecast_frame = Frame(self.root)
+            forecast_frame.config(bg=BACKGROUND_COLOR)
+            forecast_frame.grid(row = row + day * 8, column = column, rowspan = rowspan, columnspan = columnspan + 1, sticky="nsew")
+
+            labels = [ # List of forecast labels with its respective grid values
+                {f"forecast_day_{day + 1}"             : "", "row" : 0, "column": 0, "rowspan": rowspan,     "columnspan": columnspan + 1},
+                {f"forecast_icon_{day + 1}"            : "", "row" : 1, "column": 0, "rowspan": rowspan + 2, "columnspan": columnspan},
+                {f"forecast_max_temperature_{day + 1}" : "", "row" : 1, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
+                {f"forecast_min_temperature_{day + 1}" : "", "row" : 2, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
+            ]
+
+            self.create_labels(labels, forecast_frame)
+            forecast_frame.bind("<Button-1>", lambda event, frame = forecast_frame: self.update_detailed_forecast(frame))
+            self.forecast_frames.append(forecast_frame)
+
+    def create_detailed_forecast_labels(self, row, column, rowspan, columnspan):
+        """
+        Create and layout detailed forecast labels.
+
+        Args:
+            row (int): The starting row for the detailed forecast labels.
+            column (int): The starting column for the detailed forecast labels.
+            rowspan (int): The number of rows the detailed forecast section spans.
+            columnspan (int): The number of columns the detailed forecast section spans.
+
+        This function creates a frame to display detailed forecast information, including labels for day, weather conditions,
+        temperature, wind speed, humidity, rain chance, and total precipitation. The labels are placed within the specified
+        grid layout.
+        """
+        detailed_forecast_frame = Frame(self.root)
+        detailed_forecast_frame.config(bg = BACKGROUND_COLOR)
+        detailed_forecast_frame.grid(row = row, column = column + 3, rowspan = rowspan + 1, columnspan = columnspan + 2, sticky = "nsew")
+
+        labels = [ # List of detailed forecast labels with its respective grid values
+            {"detailed_forecast_day"                 : "", "row" : row,     "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
+            {"detailed_forecast_icon"                : "", "row" : row + 1, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
+            {"detailed_forecast_condition"           : "", "row" : row + 2, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
+            {"detailed_forecast_max_temperature"     : "", "row" : row + 3, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
+            {"detailed_forecast_min_temperature"     : "", "row" : row + 4, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
+            {"detailed_forecast_max_wind_speed"      : "", "row" : row + 5, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
+            {"detailed_forecast_avg_humidity"        : "", "row" : row + 6, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
+            {"detailed_forecast_rain_chance"         : "", "row" : row + 7, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
+            {"detailed_forecast_total_precipitation" : "", "row" : row + 8, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
+        ]
+
+        self.create_labels(labels, detailed_forecast_frame)
+    
     def create_labels(self, labels, parent_frame):
         """
         Create and layout labels within a parent frame.
@@ -84,148 +174,6 @@ class WeatherAppUI:
             else:
                 self.weather_labels.append({label_name : label})
 
-    def update_detailed_forecast(self, frame):
-        """
-        Update detailed forecast labels based on the selected frame.
-
-        Args:
-            frame (Frame): The frame that was clicked to trigger the update.
-        """
-        frame_index = self.forecast_frames.index(frame) - 1
-
-        label_commands = [
-            {"detailed_forecast_day": f"{self.create_forecast_options()[frame_index]} Details"},
-            {"detailed_forecast_icon": f"http:{self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['condition']['icon']}"},
-            {"detailed_forecast_condition": f"Conditions: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['condition']['text']}"},
-            {"detailed_forecast_max_temperature": f"Max Temp: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxtemp_f']}°F | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxtemp_c']}°C"},
-            {"detailed_forecast_min_temperature": f"Min Temp: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['mintemp_f']}°F | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['mintemp_c']}°C"},
-            {"detailed_forecast_max_wind_speed": f"Max Wind: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxwind_mph']} mph | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxwind_kph']} kmph"},
-            {"detailed_forecast_avg_humidity": f"Avg Humidity: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['avghumidity']}%"},
-            {"detailed_forecast_rain_chance": f"Chance of Rain: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['daily_chance_of_rain']}%"},
-            {"detailed_forecast_total_precipitation": f"Total Precip.: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['totalprecip_in']}in | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['totalprecip_mm']}mm"}
-        ]
-
-        for label_info, update_command in zip(self.detailed_forecast_labels, label_commands):
-            label_name = list(label_info.keys())[0]
-            label = label_info[label_name]
-            update_command = update_command[label_name]
-
-            if "http:" in update_command:
-                self.update_icon_label(label, update_command)
-            else:
-                self.update_label(label, update_command)
-
-    def create_current_labels(self, row, column, rowspan, columnspan):
-        """
-        Create and layout the current weather labels.
-
-        Args:
-            row (int): The starting row for the current weather labels.
-            column (int): The starting column for the current weather labels.
-            rowspan (int): The number of rows the current weather section spans.
-            columnspan (int): The number of columns the current weather section spans.
-
-        This function creates a frame to display the current weather information, including labels for weather conditions,
-        temperature, wind speed, and humidity. The labels are placed within the specified grid layout.
-        """
-        current_weather_frame = Frame(self.root)
-        current_weather_frame.config(bg=BACKGROUND_COLOR)
-        current_weather_frame.grid(row = row, column = column, rowspan = rowspan, columnspan = columnspan + 1, sticky = "nsew")
-
-        labels = [
-            {"current_label"        : "", "row": 0, "column": 0, "rowspan": rowspan,     "columnspan": columnspan + 1},
-            {"current_weather_icon" : "", "row": 1, "column": 0, "rowspan": rowspan + 4, "columnspan": columnspan},
-            {"current_condition"    : "", "row": 1, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
-            {"current_temperature"  : "", "row": 2, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
-            {"current_wind_speed"   : "", "row": 3, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
-            {"current_humidity"     : "", "row": 4, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
-        ]
-
-        self.create_labels(labels, current_weather_frame)
-        self.forecast_frames.append(current_weather_frame)
-
-    def create_forecast_labels(self, row, column, rowspan, columnspan):
-        """
-        Create and layout weather labels.
-
-        Args:
-            row (int): The starting row for labels.
-            column (int): The starting column for labels.
-            rowspan (int): The number of rows each label spans
-            columnspan (int): The number of columns each label spans.
-        """
-        for day in range(N_DAYS_FORECAST):
-            forecast_frame = Frame(self.root)
-            forecast_frame.config(bg=BACKGROUND_COLOR)
-            forecast_frame.grid(row = row + day * 8, column = column, rowspan = rowspan, columnspan = columnspan + 1, sticky="nsew")
-
-            labels = [
-                {f"forecast_day_{day + 1}"             : "", "row" : 0, "column": 0, "rowspan": rowspan,     "columnspan": columnspan + 1},
-                {f"forecast_icon_{day + 1}"            : "", "row" : 1, "column": 0, "rowspan": rowspan + 2, "columnspan": columnspan},
-                {f"forecast_max_temperature_{day + 1}" : "", "row" : 1, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
-                {f"forecast_min_temperature_{day + 1}" : "", "row" : 2, "column": 1, "rowspan": rowspan,     "columnspan": columnspan},
-            ]
-
-            self.create_labels(labels, forecast_frame)
-            forecast_frame.bind("<Button-1>", lambda event, frame = forecast_frame: self.update_detailed_forecast(frame))
-            self.forecast_frames.append(forecast_frame)
-
-    def create_detailed_forecast_labels(self, row, column, rowspan, columnspan):
-        """
-        Create and layout detailed forecast labels.
-
-        Args:
-            row (int): The starting row for the detailed forecast labels.
-            column (int): The starting column for the detailed forecast labels.
-            rowspan (int): The number of rows the detailed forecast section spans.
-            columnspan (int): The number of columns the detailed forecast section spans.
-
-        This function creates a frame to display detailed forecast information, including labels for day, weather conditions,
-        temperature, wind speed, humidity, rain chance, and total precipitation. The labels are placed within the specified
-        grid layout.
-        """
-
-        detailed_forecast_frame = Frame(self.root)
-        detailed_forecast_frame.config(bg=BACKGROUND_COLOR)
-        detailed_forecast_frame.grid(row = row, column = column + 3, rowspan = rowspan + 1, columnspan = columnspan + 2, sticky = "nsew")
-
-        labels = [ # List of forecast labels with its respective values
-            {"detailed_forecast_day"                 : "", "row" : row,     "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
-            {"detailed_forecast_icon"                : "", "row" : row + 1, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
-            {"detailed_forecast_condition"           : "", "row" : row + 2, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
-            {"detailed_forecast_max_temperature"     : "", "row" : row + 3, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
-            {"detailed_forecast_min_temperature"     : "", "row" : row + 4, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
-            {"detailed_forecast_max_wind_speed"      : "", "row" : row + 5, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
-            {"detailed_forecast_avg_humidity"        : "", "row" : row + 6, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
-            {"detailed_forecast_rain_chance"         : "", "row" : row + 7, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
-            {"detailed_forecast_total_precipitation" : "", "row" : row + 8, "column" : column + 10, "rowspan" : rowspan, "columnspan" : columnspan},
-        ]
-
-        self.create_labels(labels, detailed_forecast_frame)
-
-    def create_forecast_options(self):
-        """
-        Create forecast options for the popup menu.
-
-        Generates a list of day names for future forecast days.
-
-        Returns:
-            tuple: A tuple of forecast day options.
-        """
-        try:
-            dt = datetime.now()
-            day_chooser_values = [" Today's Forecast", " Tomorrow's Forecast"]
-            dt += timedelta(days = 1)
-            for i in range(2, N_DAYS_FORECAST):
-                dt += timedelta(days = 1)
-                if i >= 7:  #if it's a week away or more
-                    day_chooser_values.append(f" Next {dt.strftime('%A')}'s Forecast") # say "next day"
-                else:
-                    day_chooser_values.append(f" {dt.strftime('%A')}'s Forecast") # otherwise just day
-            return tuple(day_chooser_values)
-        except Exception as e:
-            messagebox.showerror("Error", f"Error creating forecast options: {e}")
-
     def get_weather(self, *args):
         """Get weather data and update the GUI."""
         try:
@@ -246,6 +194,8 @@ class WeatherAppUI:
             self.update_all_labels(current_weather, forecast_weather_list)
         except ValueError as e:
             messagebox.showerror("Error", f"{e}")
+        except requests.RequestException as e:
+            messagebox.showerror("Error", f"Request error: {e}")
         except Exception as e:
             messagebox.showerror("Error", f"Error geting weather: {e}")
 
@@ -282,6 +232,60 @@ class WeatherAppUI:
             else:
                 self.update_label(label, update_command)
 
+    def create_forecast_options(self):
+        """
+        Create forecast options for the popup menu.
+
+        Generates a list of day names for future forecast days.
+
+        Returns:
+            tuple: A tuple of forecast day options.
+        """
+        try:
+            dt = datetime.now()
+            day_chooser_values = [" Today's Forecast", " Tomorrow's Forecast"]
+            dt += timedelta(days = 1)
+            for i in range(2, N_DAYS_FORECAST):
+                dt += timedelta(days = 1)
+                if i >= 7:  #if it's a week away or more
+                    day_chooser_values.append(f" Next {dt.strftime('%A')}'s Forecast") # say "next day"
+                else:
+                    day_chooser_values.append(f" {dt.strftime('%A')}'s Forecast") # otherwise just day
+            return tuple(day_chooser_values)
+        except Exception as e:
+            messagebox.showerror("Error", f"Error creating forecast options: {e}")
+
+    def update_detailed_forecast(self, frame):
+        """
+        Update detailed forecast labels based on the selected frame.
+
+        Args:
+            frame (Frame): The frame that was clicked to trigger the update.
+        """
+        frame_index = self.forecast_frames.index(frame) - 1
+
+        label_commands = [ # List of update commands for detailed forecast weather labels
+            {"detailed_forecast_day"                 : f"{self.create_forecast_options()[frame_index]} Details"},
+            {"detailed_forecast_icon"                : f"http:{self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['condition']['icon']}"},
+            {"detailed_forecast_condition"           : f"Conditions: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['condition']['text']}"},
+            {"detailed_forecast_max_temperature"     : f"Max Temp: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxtemp_f']}°F | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxtemp_c']}°C"},
+            {"detailed_forecast_min_temperature"     : f"Min Temp: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['mintemp_f']}°F | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['mintemp_c']}°C"},
+            {"detailed_forecast_max_wind_speed"      : f"Max Wind: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxwind_mph']} mph | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['maxwind_kph']} kmph"},
+            {"detailed_forecast_avg_humidity"        : f"Avg Humidity: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['avghumidity']}%"},
+            {"detailed_forecast_rain_chance"         : f"Chance of Rain: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['daily_chance_of_rain']}%"},
+            {"detailed_forecast_total_precipitation" : f"Total Precip.: {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['totalprecip_in']}in | {self.weather_data.weather_data['forecast']['forecastday'][frame_index]['day']['totalprecip_mm']}mm"}
+        ]
+
+        for label_info, update_command in zip(self.detailed_forecast_labels, label_commands):
+            label_name = list(label_info.keys())[0]
+            label = label_info[label_name]
+            update_command = update_command[label_name]
+
+            if "http:" in update_command:
+                self.update_icon_label(label, update_command)
+            else:
+                self.update_label(label, update_command)
+
     def update_label(self, label, text):
         """
         Update a label's text.
@@ -291,17 +295,17 @@ class WeatherAppUI:
             text (str): The new text for the label.
         """
         if "Forecast" in text and "Details" not in text:
-            label.config(text = text, bg=BACKGROUND_COLOR, fg = FORECAST_COLOR, font = ("Trebuchet MS", 21, "underline"), anchor="w")
+            label.config(text = text, bg = BACKGROUND_COLOR, fg = FORECAST_COLOR, font = ("Trebuchet MS", 21, "underline"), anchor = "w")
         elif "Forecast" in text and "Details" in text:
-            label.config(text = text, bg=BACKGROUND_COLOR, fg = FORECAST_COLOR, font = ("Trebuchet MS", 21, "underline"), anchor="center")
+            label.config(text = text, bg = BACKGROUND_COLOR, fg = FORECAST_COLOR, font = ("Trebuchet MS", 21, "underline"), anchor = "center")
         elif "Current Weather" in text:
-            label.config(text = text, bg=BACKGROUND_COLOR, fg = CURRENT_WEATHER_COLOR, font = ("Trebuchet MS", 21, "underline"), anchor="center")
-        elif "Min Temp" in text:
-            label.config(text = text, bg=LIGHT_BG_COLOR, fg = MIN_TEMP_COLOR, font = ("Trebuchet MS", 18), anchor="center")
+            label.config(text = text, bg = BACKGROUND_COLOR, fg = CURRENT_WEATHER_COLOR, font = ("Trebuchet MS", 21, "underline"), anchor = "center")
+        elif "Min Temp" in text: 
+            label.config(text = text, bg = LIGHT_BG_COLOR, fg = MIN_TEMP_COLOR, font = ("Trebuchet MS", 18), anchor = "center")
         elif "Max Temp" in text:
-            label.config(text = text, bg=LIGHT_BG_COLOR, fg = MAX_TEMP_COLOR, font = ("Trebuchet MS", 18), anchor="center")
+            label.config(text = text, bg = LIGHT_BG_COLOR, fg = MAX_TEMP_COLOR, font = ("Trebuchet MS", 18), anchor = "center")
         else:
-            label.config(text = text, bg=BACKGROUND_COLOR, fg = DEFAULT_TEXT_COLOR, font = ("Trebuchet MS", 18), anchor="center")
+            label.config(text = text, bg = BACKGROUND_COLOR, fg = DEFAULT_TEXT_COLOR, font = ("Trebuchet MS", 18), anchor = "center")
 
     def update_icon_label(self, label, icon_url):
         """
@@ -311,10 +315,17 @@ class WeatherAppUI:
             label (Label): The label widget to update with an icon.
             icon_url (str): The URL of the icon image.
         """
-        self.download_icon(icon_url, "temp_icon.png")
-        icon = ImageTk.PhotoImage(file = "temp_icon.png")
-        label.config(image = icon)
-        label.image = icon
+        try:
+            self.download_icon(icon_url, "temp_icon.png")
+            icon = ImageTk.PhotoImage(file = "temp_icon.png")
+            label.config(image = icon)
+            label.image = icon
+        except WeatherAppError as e:
+            messagebox.showerror("Error", f"{e}")
+        except IOError as e:
+            messagebox.showerror("Error", f"{e}")
+        except Exception as e:
+            messagebox.showerror("Error", f"An unexpected error occurred: {e}")
 
     def download_icon(self, url, filename):
         """
@@ -330,10 +341,10 @@ class WeatherAppUI:
                 with open(filename, "wb") as f:
                     for chunk in response.iter_content(1024):
                         f.write(chunk)
-            else:
-                raise ValueError(f"Icon download request failed with status code {response.status_code}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Error occurred downloading icon: {e}")
+        except requests.RequestException as e:    
+            raise WeatherAppError(f"Icon download request failed: {e}")
+        except IOError as e:
+            raise IOError(f"Error writing icon file: {e}")
 
     def run(self):
         self.root.mainloop()

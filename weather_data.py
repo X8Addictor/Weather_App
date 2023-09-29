@@ -20,9 +20,9 @@ class WeatherData:
                 self.current_weather = self.weather_data["current"]
                 self.forecast_weather = self.weather_data["forecast"]["forecastday"]
             else:
-                raise Exception(f"API request failed with status code {response.status_code}")
+                raise requests.RequestException(f"API request failed with status code: {response.status_code}")
         except Exception as e:
-            print(f"Error fetching weather data: {e}")
+            raise Exception(f"Error fetching weather data: {e}")
 
     def get_current_weather(self):
         """
