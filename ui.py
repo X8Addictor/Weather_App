@@ -52,12 +52,12 @@ class WeatherAppUI:
 
         This section includes a label, an entry field, and a "Get Weather" button.
         """
-        Label(self.root, text="Enter City, State or Country: ", bg=BACKGROUND_COLOR).grid(row = 0, column = 0, sticky = "nsew")
-        self.location_entry = Entry(self.root, width=20, bg = BACKGROUND_COLOR)
+        Label(self.root, text="Enter City, State or Country: ").grid(row = 0, column = 0, sticky = "nsew")
+        self.location_entry = Entry(self.root, width=20)
         self.location_entry.grid(row = 0, column = 1, sticky = "nsew")
         self.location_entry.bind('<Return>', self.get_weather)
         self.location_entry.focus_set()
-        Button(self.root, text="Get Weather", bg = BACKGROUND_COLOR, command=self.get_weather).grid(row = 0, column = 2, sticky = "nsew")
+        Button(self.root, text="Get Weather", command=self.get_weather).grid(row = 0, column = 2, sticky = "nsew")
 
     def create_labels(self, labels, parent_frame):
         """
